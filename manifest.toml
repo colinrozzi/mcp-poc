@@ -1,0 +1,16 @@
+name = "process-tester"
+version = "0.1.0"
+description = "A basic Theater actor"
+component_path = "/Users/colinrozzi/work/actors/process-tester/target/wasm32-unknown-unknown/release/process_tester.wasm"
+
+[interface]
+implements = "ntwk:theater/actor"
+requires = []
+
+[[handlers]]
+type = "runtime"
+config = {}
+
+[[handlers]]
+type = "process"
+config = {}
