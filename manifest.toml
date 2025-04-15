@@ -1,7 +1,7 @@
-name = "process-tester"
+name = "mcp-poc"
 version = "0.1.0"
-description = "A basic Theater actor"
-component_path = "/Users/colinrozzi/work/actors/process-tester/target/wasm32-unknown-unknown/release/process_tester.wasm"
+description = "MCP Server Integration Proof of Concept"
+component_path = "/Users/colinrozzi/work/actors/mcp-poc/target/wasm32-unknown-unknown/release/mcp_poc.wasm"
 
 [interface]
 implements = "ntwk:theater/actor"
