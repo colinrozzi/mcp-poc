@@ -128,7 +128,7 @@ impl Guest for Actor {
         // Serialize the app state
         let state_bytes = serde_json::to_vec(&updated_state).map_err(|e| e.to_string())?;
 
-        send(&self_id, b"init");
+        send(&self_id, b"initialize server").expect("Failed to send init message");
 
         // Return the updated state
         Ok((Some(state_bytes),))
