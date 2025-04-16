@@ -3,6 +3,7 @@ mod bindings;
 use crate::bindings::exports::ntwk::theater::actor::Guest;
 use crate::bindings::exports::ntwk::theater::message_server_client::Guest as MessageServerClient;
 use crate::bindings::exports::ntwk::theater::process_handlers::Guest as ProcessHandlers;
+use crate::bindings::ntwk::theater::message_server_host::send;
 use crate::bindings::ntwk::theater::process::{
     os_kill, os_signal, os_spawn, os_status, os_write_stdin, OutputMode,
 };
@@ -87,8 +88,8 @@ struct Actor;
 impl Guest for Actor {
     fn init(_state: Option<Vec<u8>>, params: (String,)) -> Result<(Option<Vec<u8>>,), String> {
         log("Initializing mcp-poc actor");
-        let (param,) = params;
-        log(&format!("Init parameter: {}", param));
+        let (self_id,) = params;
+        log(&format!("self id: {}", self_id));
 
         let app_state = AppState::default();
         log("Created default app state");
@@ -126,6 +127,8 @@ impl Guest for Actor {
 
         // Serialize the app state
         let state_bytes = serde_json::to_vec(&updated_state).map_err(|e| e.to_string())?;
+
+        send(&self_id, b"init");
 
         // Return the updated state
         Ok((Some(state_bytes),))
@@ -278,244 +281,6 @@ impl MessageServerClient for Actor {
     {
         log("mcp-poc: Received channel message");
         Ok((state,))
-    }
-}
-
-// Helper functions for MCP protocol interaction
-
-// Extract complete JSON objects from a buffer string
-fn extract_json_messages(buffer: &mut String) -> Option<Vec<String>> {
-    let mut messages = Vec::new();
-    let mut start_index = 0;
-
-    // Find JSON objects in the buffer
-    while let Some(start) = buffer[start_index..].find('{') {
-        let start_pos = start_index + start;
-        let mut depth = 0;
-        let mut found_end = false;
-
-        // Find the matching closing brace
-        for (i, ch) in buffer[start_pos..].char_indices() {
-            match ch {
-                '{' => depth += 1,
-                '}' => {
-                    depth -= 1;
-                    if depth == 0 {
-                        let end_pos = start_pos + i + 1;
-                        messages.push(buffer[start_pos..end_pos].to_string());
-                        start_index = end_pos;
-                        found_end = true;
-                        break;
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        if !found_end {
-            break; // Incomplete JSON object, wait for more data
-        }
-    }
-
-    // Remove processed messages from the buffer
-    if !messages.is_empty() {
-        *buffer = buffer[start_index..].to_string();
-        Some(messages)
-    } else {
-        None
-    }
-}
-
-// Process an MCP response message
-fn process_mcp_response(app_state: &mut AppState, response_text: &str) -> Result<(), String> {
-    log(&format!("Processing MCP response: {}", response_text));
-
-    // Parse the response JSON
-    let response: McpResponse = serde_json::from_str(response_text)
-        .map_err(|e| format!("Failed to parse MCP response: {}", e))?;
-
-    // Find the matching request
-    let request_index = app_state
-        .pending_requests
-        .iter()
-        .position(|req| req.id == response.id);
-
-    if let Some(index) = request_index {
-        let request = app_state.pending_requests.remove(index);
-        log(&format!("Found matching request: {:?}", request));
-
-        // Handle specific MCP responses based on the request method
-        match request.method.as_str() {
-            "initialize" => {
-                log("Received initialize response");
-                if response.error.is_none() {
-                    app_state.server_initialized = true;
-
-                    // Send a request to list tools
-                    let list_tools_request = create_list_tools_request()?;
-                    send_mcp_request(app_state, list_tools_request)?;
-                } else {
-                    log(&format!("Initialize error: {:?}", response.error));
-                }
-            }
-            "listTools" => {
-                log("Received listTools response");
-                if let Some(result) = response.result {
-                    if let Some(tools) = result.get("tools") {
-                        if let Some(tools_array) = tools.as_array() {
-                            app_state.available_tools = tools_array
-                                .iter()
-                                .filter_map(|tool| tool.get("name")?.as_str().map(String::from))
-                                .collect();
-                            log(&format!("Available tools: {:?}", app_state.available_tools));
-                        }
-                    }
-                } else {
-                    log(&format!("listTools error: {:?}", response.error));
-                }
-            }
-            "callTool" => {
-                log("Received callTool response");
-                if let Some(result) = response.result {
-                    // Check if this was a list_allowed_dirs call
-                    if let Some(params) = &request.params {
-                        if let Some(tool_name) = params.get("name").and_then(|n| n.as_str()) {
-                            if tool_name == "list_allowed_dirs" {
-                                // Parse allowed directories from the response
-                                if let Some(content) = result.get("content") {
-                                    if let Some(content_array) = content.as_array() {
-                                        if let Some(first_content) = content_array.first() {
-                                            if let Some(text) =
-                                                first_content.get("text").and_then(|t| t.as_str())
-                                            {
-                                                if let Ok(dirs_value) =
-                                                    serde_json::from_str::<Value>(text)
-                                                {
-                                                    if let Some(dirs_array) = dirs_value.as_array()
-                                                    {
-                                                        app_state.allowed_directories = dirs_array
-                                                            .iter()
-                                                            .filter_map(|dir| {
-                                                                dir.as_str().map(String::from)
-                                                            })
-                                                            .collect();
-                                                        log(&format!(
-                                                            "Allowed directories: {:?}",
-                                                            app_state.allowed_directories
-                                                        ));
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    log(&format!("callTool error: {:?}", response.error));
-                }
-            }
-            _ => {
-                log(&format!("Received response for method: {}", request.method));
-            }
-        }
-    } else {
-        log(&format!(
-            "No matching request found for response ID: {}",
-            response.id
-        ));
-    }
-
-    Ok(())
-}
-
-// Create an initialize request
-fn create_initialize_request() -> Result<McpRequest, String> {
-    let id = next_request_id();
-    Ok(McpRequest {
-        jsonrpc: "2.0".to_string(),
-        id,
-        method: "initialize".to_string(),
-        params: Some(json!({
-            "clientInfo": {
-                "name": "mcp-poc",
-                "version": "0.1.0"
-            }
-        })),
-    })
-}
-
-// Create a listTools request
-fn create_list_tools_request() -> Result<McpRequest, String> {
-    let id = next_request_id();
-    Ok(McpRequest {
-        jsonrpc: "2.0".to_string(),
-        id,
-        method: "listTools".to_string(),
-        params: None,
-    })
-}
-
-// Create a list_allowed_dirs tool call request
-fn create_list_allowed_dirs_request() -> Result<McpRequest, String> {
-    let id = next_request_id();
-    Ok(McpRequest {
-        jsonrpc: "2.0".to_string(),
-        id,
-        method: "callTool".to_string(),
-        params: Some(json!({
-            "name": "list_allowed_dirs",
-            "arguments": {}
-        })),
-    })
-}
-
-// Create a list tool call request
-fn create_list_request(path: &str) -> Result<McpRequest, String> {
-    let id = next_request_id();
-    Ok(McpRequest {
-        jsonrpc: "2.0".to_string(),
-        id,
-        method: "callTool".to_string(),
-        params: Some(json!({
-            "name": "list",
-            "arguments": {
-                "path": path,
-                "recursive": false,
-                "include_hidden": false,
-                "metadata": true
-            }
-        })),
-    })
-}
-
-// Send an MCP request to the server
-fn send_mcp_request(app_state: &mut AppState, request: McpRequest) -> Result<(), String> {
-    if let Some(pid) = app_state.server_pid {
-        // Convert request to JSON
-        let request_json = serde_json::to_string(&request)
-            .map_err(|e| format!("Failed to serialize request: {}", e))?;
-
-        log(&format!("Sending MCP request: {}", request_json));
-
-        // Add newline to the request
-        let request_bytes = format!("{}\n", request_json).into_bytes();
-
-        // Send the request to the server
-        os_write_stdin(pid, &request_bytes)
-            .map_err(|e| format!("Failed to write to server stdin: {}", e))?;
-
-        // Store the pending request
-        app_state.pending_requests.push(PendingRequest {
-            id: request.id,
-            method: request.method,
-            params: request.params,
-        });
-
-        Ok(())
-    } else {
-        Err("No server process is running".to_string())
     }
 }
 

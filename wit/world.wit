@@ -7,4 +7,5 @@ world hello-world {
 
     export process-handlers;
     import process;
+    import message-server-host;
 }

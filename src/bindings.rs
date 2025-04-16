@@ -72,6 +72,11 @@ pub mod ntwk {
             /// - None when an actor is first initialized and has no state yet
             /// - Some(bytes) containing serialized state data when the actor has state
             pub type State = Option<_rt::Vec<u8>>;
+            /// Unique identifier for an actor
+            ///
+            /// Actors are identified by string identifiers throughout the system. These
+            /// identifiers are typically UUIDs or other unique strings.
+            pub type ActorId = _rt::String;
             /// Unique identifier for a channel
             ///
             /// Channels are communication pathways between actors or between actors and
@@ -932,6 +937,634 @@ pub mod ntwk {
                         _ => _rt::invalid_enum_discriminant(),
                     };
                     result6
+                }
+            }
+        }
+        /// # Message Server Host Interface
+        ///
+        /// Provides functions for actors to send messages to other actors and manage communication channels.
+        ///
+        /// ## Purpose
+        ///
+        /// This interface enables actors to initiate various types of communication:
+        /// - Send one-way messages to other actors
+        /// - Make request-response interactions with other actors
+        /// - Establish and use bidirectional communication channels
+        ///
+        /// These functions allow actors to collaborate, share data, and coordinate their activities
+        /// within the Theater system.
+        ///
+        /// ## Example
+        ///
+        /// ```rust
+        /// use ntwk::theater::message_server_host;
+        /// use ntwk::theater::types::actor_id;
+        /// use serde_json::json;
+        ///
+        /// async fn example() -> Result<(), String> {
+        ///     // Get the target actor ID (in a real scenario)
+        ///     let target_actor = actor_id { id: "actor-123".to_string() };
+        ///
+        ///     // Send a one-way message
+        ///     let message = json!({"action": "update", "value": 42});
+        ///     message_server_host::send(target_actor.clone(), message)?;
+        ///
+        ///     // Make a request and get a response
+        ///     let request = json!({"action": "query", "key": "user-profile"});
+        ///     let response = message_server_host::request(target_actor.clone(), request)?;
+        ///     println!("Received response: {}", response);
+        ///
+        ///     // Open a channel for ongoing communication
+        ///     let initial_msg = json!({"action": "subscribe", "topic": "updates"});
+        ///     let channel_id = message_server_host::open_channel(target_actor, initial_msg)?;
+        ///
+        ///     // Send messages on the channel
+        ///     message_server_host::send_on_channel(channel_id.clone(), json!({"update": 1}))?;
+        ///     message_server_host::send_on_channel(channel_id.clone(), json!({"update": 2}))?;
+        ///
+        ///     // Close the channel when done
+        ///     message_server_host::close_channel(channel_id)?;
+        ///
+        ///     Ok(())
+        /// }
+        /// ```
+        ///
+        /// ## Security
+        ///
+        /// The message server enforces security boundaries to ensure that:
+        /// - Actors can only communicate with actors they have permission to access
+        /// - Messages are delivered reliably and in order
+        /// - Channel operations are authenticated
+        ///
+        /// All message operations are tracked in the actor's event chain for complete auditability.
+        ///
+        /// ## Implementation Notes
+        ///
+        /// The message server operations are asynchronous but appear synchronous to the WebAssembly
+        /// component. The runtime suspends the actor's execution as needed without blocking the
+        /// entire system.
+        #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
+        pub mod message_server_host {
+            #[used]
+            #[doc(hidden)]
+            static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
+            use super::super::super::_rt;
+            pub type Json = super::super::super::ntwk::theater::types::Json;
+            pub type ActorId = super::super::super::ntwk::theater::types::ActorId;
+            pub type ChannelId = super::super::super::ntwk::theater::types::ChannelId;
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Send one-way message
+            ///
+            /// Sends a message to another actor without waiting for a response.
+            ///
+            /// ## Parameters
+            ///
+            /// * `actor-id` - ID of the target actor
+            /// * `msg` - JSON message payload to send
+            ///
+            /// ## Returns
+            ///
+            /// * `Ok(_)` - Message was successfully sent
+            /// * `Err(string)` - Error message if send fails
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::message_server_host;
+            /// use ntwk::theater::types::actor_id;
+            /// use serde_json::json;
+            ///
+            /// // Send a notification
+            /// let target = actor_id { id: "logging-service".to_string() };
+            /// let log_msg = json!({
+            ///     "level": "info",
+            ///     "message": "User logged in",
+            ///     "timestamp": 1625097600000
+            /// });
+            /// message_server_host::send(target, log_msg)?;
+            /// ```
+            ///
+            /// ## Security
+            ///
+            /// The runtime verifies that the sender has permission to send messages to the
+            /// target actor before delivery.
+            pub fn send(actor_id: &str, msg: &[u8]) -> Result<(), _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let vec0 = actor_id;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let vec1 = msg;
+                    let ptr1 = vec1.as_ptr().cast::<u8>();
+                    let len1 = vec1.len();
+                    let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    unsafe extern "C" {
+                        #[link_name = "send"]
+                        fn wit_import3(
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                        );
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import3(
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                    ) {
+                        unreachable!()
+                    }
+                    unsafe {
+                        wit_import3(ptr0.cast_mut(), len0, ptr1.cast_mut(), len1, ptr2)
+                    };
+                    let l4 = i32::from(*ptr2.add(0).cast::<u8>());
+                    let result8 = match l4 {
+                        0 => {
+                            let e = ();
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l5 = *ptr2
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l6 = *ptr2
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len7 = l6;
+                                let bytes7 = _rt::Vec::from_raw_parts(
+                                    l5.cast(),
+                                    len7,
+                                    len7,
+                                );
+                                _rt::string_lift(bytes7)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result8
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Send request and await response
+            ///
+            /// Sends a message to another actor and waits for a response.
+            ///
+            /// ## Parameters
+            ///
+            /// * `actor-id` - ID of the target actor
+            /// * `msg` - JSON request payload to send
+            ///
+            /// ## Returns
+            ///
+            /// * `Ok(json)` - The response from the target actor
+            /// * `Err(string)` - Error message if the request fails
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::message_server_host;
+            /// use ntwk::theater::types::actor_id;
+            /// use serde_json::json;
+            ///
+            /// // Query a data service
+            /// let data_service = actor_id { id: "data-service".to_string() };
+            /// let query = json!({
+            ///     "query": "SELECT * FROM users WHERE id = ?",
+            ///     "parameters": [42]
+            /// });
+            /// let result = message_server_host::request(data_service, query)?;
+            /// ```
+            ///
+            /// ## Implementation Notes
+            ///
+            /// This function suspends the calling actor's execution until a response is received
+            /// or a timeout occurs. The runtime handles the suspension efficiently without
+            /// blocking other actors.
+            pub fn request(actor_id: &str, msg: &[u8]) -> Result<Json, _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let vec0 = actor_id;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let vec1 = msg;
+                    let ptr1 = vec1.as_ptr().cast::<u8>();
+                    let len1 = vec1.len();
+                    let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    unsafe extern "C" {
+                        #[link_name = "request"]
+                        fn wit_import3(
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                        );
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import3(
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                    ) {
+                        unreachable!()
+                    }
+                    unsafe {
+                        wit_import3(ptr0.cast_mut(), len0, ptr1.cast_mut(), len1, ptr2)
+                    };
+                    let l4 = i32::from(*ptr2.add(0).cast::<u8>());
+                    let result11 = match l4 {
+                        0 => {
+                            let e = {
+                                let l5 = *ptr2
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l6 = *ptr2
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len7 = l6;
+                                _rt::Vec::from_raw_parts(l5.cast(), len7, len7)
+                            };
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l8 = *ptr2
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l9 = *ptr2
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len10 = l9;
+                                let bytes10 = _rt::Vec::from_raw_parts(
+                                    l8.cast(),
+                                    len10,
+                                    len10,
+                                );
+                                _rt::string_lift(bytes10)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result11
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Open communication channel
+            ///
+            /// Establishes a bidirectional communication channel with another actor.
+            ///
+            /// ## Parameters
+            ///
+            /// * `actor-id` - ID of the target actor
+            /// * `initial-msg` - JSON message sent as part of channel establishment
+            ///
+            /// ## Returns
+            ///
+            /// * `Ok(channel-id)` - ID of the established channel
+            /// * `Err(string)` - Error message if channel establishment fails
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::message_server_host;
+            /// use ntwk::theater::types::actor_id;
+            /// use serde_json::json;
+            ///
+            /// // Open a channel to a streaming service
+            /// let streaming_service = actor_id { id: "data-stream".to_string() };
+            /// let subscription = json!({
+            ///     "action": "subscribe",
+            ///     "topics": ["market-data", "news-feed"],
+            ///     "options": {"buffer_size": 100}
+            /// });
+            /// let channel = message_server_host::open_channel(streaming_service, subscription)?;
+            /// ```
+            ///
+            /// ## Security
+            ///
+            /// Channel establishment requires mutual consent:
+            /// 1. The initiator requests the channel by calling this function
+            /// 2. The target actor explicitly accepts or rejects the channel
+            ///
+            /// This provides a security checkpoint to prevent unwanted channels.
+            pub fn open_channel(
+                actor_id: &str,
+                initial_msg: &[u8],
+            ) -> Result<ChannelId, _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let vec0 = actor_id;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let vec1 = initial_msg;
+                    let ptr1 = vec1.as_ptr().cast::<u8>();
+                    let len1 = vec1.len();
+                    let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    unsafe extern "C" {
+                        #[link_name = "open-channel"]
+                        fn wit_import3(
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                        );
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import3(
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                    ) {
+                        unreachable!()
+                    }
+                    unsafe {
+                        wit_import3(ptr0.cast_mut(), len0, ptr1.cast_mut(), len1, ptr2)
+                    };
+                    let l4 = i32::from(*ptr2.add(0).cast::<u8>());
+                    let result11 = match l4 {
+                        0 => {
+                            let e = {
+                                let l5 = *ptr2
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l6 = *ptr2
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len7 = l6;
+                                let bytes7 = _rt::Vec::from_raw_parts(
+                                    l5.cast(),
+                                    len7,
+                                    len7,
+                                );
+                                _rt::string_lift(bytes7)
+                            };
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l8 = *ptr2
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l9 = *ptr2
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len10 = l9;
+                                let bytes10 = _rt::Vec::from_raw_parts(
+                                    l8.cast(),
+                                    len10,
+                                    len10,
+                                );
+                                _rt::string_lift(bytes10)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result11
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Send message on channel
+            ///
+            /// Sends a message through an established channel.
+            ///
+            /// ## Parameters
+            ///
+            /// * `channel-id` - ID of the channel to send on
+            /// * `msg` - JSON message payload to send
+            ///
+            /// ## Returns
+            ///
+            /// * `Ok(_)` - Message was successfully sent
+            /// * `Err(string)` - Error message if send fails
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::message_server_host;
+            /// use serde_json::json;
+            ///
+            /// // Send a message on an established channel
+            /// let update = json!({
+            ///     "type": "position-update",
+            ///     "x": 10.5,
+            ///     "y": 20.3,
+            ///     "timestamp": 1625097600000
+            /// });
+            /// message_server_host::send_on_channel(channel_id, update)?;
+            /// ```
+            ///
+            /// ## Implementation Notes
+            ///
+            /// Messages sent on a channel are delivered in order. If the channel is closed
+            /// or invalid, this function will return an error.
+            pub fn send_on_channel(
+                channel_id: &str,
+                msg: &[u8],
+            ) -> Result<(), _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let vec0 = channel_id;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let vec1 = msg;
+                    let ptr1 = vec1.as_ptr().cast::<u8>();
+                    let len1 = vec1.len();
+                    let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    unsafe extern "C" {
+                        #[link_name = "send-on-channel"]
+                        fn wit_import3(
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                        );
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import3(
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                    ) {
+                        unreachable!()
+                    }
+                    unsafe {
+                        wit_import3(ptr0.cast_mut(), len0, ptr1.cast_mut(), len1, ptr2)
+                    };
+                    let l4 = i32::from(*ptr2.add(0).cast::<u8>());
+                    let result8 = match l4 {
+                        0 => {
+                            let e = ();
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l5 = *ptr2
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l6 = *ptr2
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len7 = l6;
+                                let bytes7 = _rt::Vec::from_raw_parts(
+                                    l5.cast(),
+                                    len7,
+                                    len7,
+                                );
+                                _rt::string_lift(bytes7)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result8
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Close channel
+            ///
+            /// Closes an open communication channel.
+            ///
+            /// ## Parameters
+            ///
+            /// * `channel-id` - ID of the channel to close
+            ///
+            /// ## Returns
+            ///
+            /// * `Ok(_)` - Channel was successfully closed
+            /// * `Err(string)` - Error message if close fails
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::message_server_host;
+            ///
+            /// // Close a channel when done with it
+            /// message_server_host::close_channel(channel_id)?;
+            /// ```
+            ///
+            /// ## Implementation Notes
+            ///
+            /// Closing a channel is a final operation - once closed, a channel cannot be reopened.
+            /// Both participants receive a notification when a channel is closed.
+            pub fn close_channel(channel_id: &str) -> Result<(), _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let vec0 = channel_id;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    unsafe extern "C" {
+                        #[link_name = "close-channel"]
+                        fn wit_import2(_: *mut u8, _: usize, _: *mut u8);
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import2(_: *mut u8, _: usize, _: *mut u8) {
+                        unreachable!()
+                    }
+                    unsafe { wit_import2(ptr0.cast_mut(), len0, ptr1) };
+                    let l3 = i32::from(*ptr1.add(0).cast::<u8>());
+                    let result7 = match l3 {
+                        0 => {
+                            let e = ();
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l4 = *ptr1
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l5 = *ptr1
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len6 = l5;
+                                let bytes6 = _rt::Vec::from_raw_parts(
+                                    l4.cast(),
+                                    len6,
+                                    len6,
+                                );
+                                _rt::string_lift(bytes6)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result7
                 }
             }
         }
@@ -2663,9 +3296,9 @@ pub(crate) use __export_hello_world_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1683] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x91\x0c\x01A\x02\x01\
-A\x13\x01B\x14\x01p}\x04\0\x04json\x03\0\0\x01p}\x01k\x02\x04\0\x05state\x03\0\x03\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1978] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb8\x0e\x01A\x02\x01\
+A\x15\x01B\x14\x01p}\x04\0\x04json\x03\0\0\x01p}\x01k\x02\x04\0\x05state\x03\0\x03\
 \x01s\x04\0\x08actor-id\x03\0\x05\x01s\x04\0\x0achannel-id\x03\0\x07\x01k\x01\x01\
 r\x02\x08accepted\x7f\x07message\x09\x04\0\x0echannel-accept\x03\0\x0a\x01kw\x01\
 r\x03\x0aevent-types\x06parent\x0c\x04data\x01\x04\0\x05event\x03\0\x0d\x01r\x02\
@@ -2685,27 +3318,34 @@ ew\x04\0\x0eprocess-status\x03\0\x0c\x01j\x01w\x01s\x01@\x01\x06config\x0a\0\x0e
 \x04\0\x0eos-write-stdin\x01\x12\x01j\x01\x0d\x01s\x01@\x01\x03pidw\0\x13\x04\0\x09\
 os-status\x01\x14\x01j\0\x01s\x01@\x02\x03pidw\x06signaly\0\x15\x04\0\x09os-sign\
 al\x01\x16\x01@\x01\x03pidw\0\x15\x04\0\x07os-kill\x01\x17\x03\0\x14ntwk:theater\
-/process\x05\x05\x02\x03\0\0\x05state\x01B\x07\x02\x03\x02\x01\x06\x04\0\x05stat\
-e\x03\0\0\x01o\x01s\x01o\x01\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\x06para\
-ms\x02\0\x04\x04\0\x04init\x01\x05\x04\0\x12ntwk:theater/actor\x05\x07\x02\x03\0\
-\0\x05event\x02\x03\0\0\x0achannel-id\x02\x03\0\0\x0echannel-accept\x01B\x1d\x02\
-\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x02\x03\x02\x01\x08\x04\0\x05event\x03\0\x02\
-\x02\x03\x02\x01\x09\x04\0\x0achannel-id\x03\0\x04\x02\x03\x02\x01\x0a\x04\0\x0e\
-channel-accept\x03\0\x06\x01k\x01\x01o\x01\x01\x01o\x01\x08\x01j\x01\x0a\x01s\x01\
-@\x02\x05state\x08\x06params\x09\0\x0b\x04\0\x0bhandle-send\x01\x0c\x01o\x02\x08\
-\x09\x01j\x01\x0d\x01s\x01@\x02\x05state\x08\x06params\x09\0\x0e\x04\0\x0ehandle\
--request\x01\x0f\x01o\x01\x07\x01o\x02\x08\x10\x01j\x01\x11\x01s\x01@\x02\x05sta\
-te\x08\x06params\x09\0\x12\x04\0\x13handle-channel-open\x01\x13\x01o\x02\x05\x01\
-\x01@\x02\x05state\x08\x06params\x14\0\x0b\x04\0\x16handle-channel-message\x01\x15\
-\x01o\x01\x05\x01@\x02\x05state\x08\x06params\x16\0\x0b\x04\0\x14handle-channel-\
-close\x01\x17\x04\0\"ntwk:theater/message-server-client\x05\x0b\x01B\x0d\x02\x03\
-\x02\x01\x01\x04\0\x04json\x03\0\0\x01k\x01\x01p}\x01o\x02w\x03\x01o\x01\x02\x01\
-j\x01\x05\x01s\x01@\x02\x05state\x02\x06params\x04\0\x06\x04\0\x0dhandle-stdout\x01\
-\x07\x04\0\x0dhandle-stderr\x01\x07\x01o\x02wz\x01@\x02\x05state\x02\x06params\x08\
-\0\x06\x04\0\x0bhandle-exit\x01\x09\x04\0\x1dntwk:theater/process-handlers\x05\x0c\
-\x04\0\x18ntwk:theater/hello-world\x04\0\x0b\x11\x01\0\x0bhello-world\x03\0\0\0G\
-\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen\
--rust\x060.41.0";
+/process\x05\x05\x02\x03\0\0\x0achannel-id\x01B\x13\x02\x03\x02\x01\x01\x04\0\x04\
+json\x03\0\0\x02\x03\x02\x01\x03\x04\0\x08actor-id\x03\0\x02\x02\x03\x02\x01\x06\
+\x04\0\x0achannel-id\x03\0\x04\x01j\0\x01s\x01@\x02\x08actor-id\x03\x03msg\x01\0\
+\x06\x04\0\x04send\x01\x07\x01j\x01\x01\x01s\x01@\x02\x08actor-id\x03\x03msg\x01\
+\0\x08\x04\0\x07request\x01\x09\x01j\x01\x05\x01s\x01@\x02\x08actor-id\x03\x0bin\
+itial-msg\x01\0\x0a\x04\0\x0copen-channel\x01\x0b\x01@\x02\x0achannel-id\x05\x03\
+msg\x01\0\x06\x04\0\x0fsend-on-channel\x01\x0c\x01@\x01\x0achannel-id\x05\0\x06\x04\
+\0\x0dclose-channel\x01\x0d\x03\0\x20ntwk:theater/message-server-host\x05\x07\x02\
+\x03\0\0\x05state\x01B\x07\x02\x03\x02\x01\x08\x04\0\x05state\x03\0\0\x01o\x01s\x01\
+o\x01\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\0\x04i\
+nit\x01\x05\x04\0\x12ntwk:theater/actor\x05\x09\x02\x03\0\0\x05event\x02\x03\0\0\
+\x0echannel-accept\x01B\x1d\x02\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x02\x03\x02\
+\x01\x0a\x04\0\x05event\x03\0\x02\x02\x03\x02\x01\x06\x04\0\x0achannel-id\x03\0\x04\
+\x02\x03\x02\x01\x0b\x04\0\x0echannel-accept\x03\0\x06\x01k\x01\x01o\x01\x01\x01\
+o\x01\x08\x01j\x01\x0a\x01s\x01@\x02\x05state\x08\x06params\x09\0\x0b\x04\0\x0bh\
+andle-send\x01\x0c\x01o\x02\x08\x09\x01j\x01\x0d\x01s\x01@\x02\x05state\x08\x06p\
+arams\x09\0\x0e\x04\0\x0ehandle-request\x01\x0f\x01o\x01\x07\x01o\x02\x08\x10\x01\
+j\x01\x11\x01s\x01@\x02\x05state\x08\x06params\x09\0\x12\x04\0\x13handle-channel\
+-open\x01\x13\x01o\x02\x05\x01\x01@\x02\x05state\x08\x06params\x14\0\x0b\x04\0\x16\
+handle-channel-message\x01\x15\x01o\x01\x05\x01@\x02\x05state\x08\x06params\x16\0\
+\x0b\x04\0\x14handle-channel-close\x01\x17\x04\0\"ntwk:theater/message-server-cl\
+ient\x05\x0c\x01B\x0d\x02\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x01k\x01\x01p}\x01\
+o\x02w\x03\x01o\x01\x02\x01j\x01\x05\x01s\x01@\x02\x05state\x02\x06params\x04\0\x06\
+\x04\0\x0dhandle-stdout\x01\x07\x04\0\x0dhandle-stderr\x01\x07\x01o\x02wz\x01@\x02\
+\x05state\x02\x06params\x08\0\x06\x04\0\x0bhandle-exit\x01\x09\x04\0\x1dntwk:the\
+ater/process-handlers\x05\x0d\x04\0\x18ntwk:theater/hello-world\x04\0\x0b\x11\x01\
+\0\x0bhello-world\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-compone\
+nt\x070.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {
