@@ -2,6 +2,7 @@ name = "mcp-poc"
 version = "0.1.0"
 description = "MCP Server Integration Proof of Concept"
 component_path = "/Users/colinrozzi/work/actors/mcp-poc/target/wasm32-unknown-unknown/release/mcp_poc.wasm"
+init_state = "/Users/colinrozzi/work/actors/mcp-poc/fs-server.json"
 
 [interface]
 implements = "ntwk:theater/actor"

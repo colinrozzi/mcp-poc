@@ -1,0 +1,7 @@
+{
+	"server_path": "/Users/colinrozzi/work/mcp-servers/fs-mcp-server/target/debug/fs-mcp-server",
+	"args": [
+                "--allowed-dirs",
+                "/Users/colinrozzi/work/tmp"
+	]
+}
