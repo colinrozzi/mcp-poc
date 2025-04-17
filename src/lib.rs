@@ -136,6 +136,7 @@ impl Guest for Actor {
 
         let init_message = Request {
             method: "initialize".to_string(),
+            params: None,
         };
 
         send(
@@ -193,15 +194,45 @@ impl ProcessHandlers for Actor {
     ) -> Result<(Option<Vec<u8>>,), String> {
         let (pid, data) = params;
 
+        // Parse the current state
+        let state_bytes = state.unwrap_or_default();
+        if state_bytes.is_empty() {
+            return Ok((None,));
+        }
+
+        let mut app_state: AppState = serde_json::from_slice(&state_bytes)
+            .map_err(|e| format!("Failed to deserialize state: {}", e))?;
+
         // Try to parse the data as UTF-8
         if let Ok(stdout_data) = String::from_utf8(data.clone()) {
             log(&format!("Received stdout: [{}] {} ", pid, stdout_data));
+            
+            // Check if this looks like a JSON-RPC response
+            if stdout_data.contains("jsonrpc") && (stdout_data.contains("result") || stdout_data.contains("error")) {
+                // Try to parse as McpResponse
+                match serde_json::from_str::<McpResponse>(&stdout_data) {
+                    Ok(response) => {
+                        log(&format!("Parsed MCP response with ID: {}", response.id));
+                        
+                        // Check if initialization was successful
+                        if response.id == 0 && response.error.is_none() {
+                            log("Server initialization successful");
+                            app_state.server_initialized = true;
+                        }
+                    },
+                    Err(e) => {
+                        log(&format!("Failed to parse MCP response: {}", e));
+                    }
+                }
+            }
         } else {
             log("Received non-UTF8 data on stdout");
             log(&format!("non-UTF8 data: [{}] {:?}", pid, data).to_string());
         }
 
-        Ok((state,))
+        // Update state
+        let updated_state = serde_json::to_vec(&app_state).map_err(|e| e.to_string())?;
+        Ok((Some(updated_state),))
     }
 
     fn handle_stderr(
@@ -239,6 +270,18 @@ impl MessageServerClient for Actor {
         let (data,) = params;
         log(&format!("Data: {:?}", data));
 
+        // Try to make sense of the array-like data
+        let request_str = String::from_utf8(data.clone())
+            .map_err(|e| format!("Failed to convert data to string: {}", e))?;
+
+        // Check if this is a process message (handle-stdout)
+        if request_str.starts_with("[") && request_str.contains("handle-stdout") {
+            log("Received process stdout data");
+            // This is process stdout data, we should handle it specially
+            return handle_process_stdout(state, request_str);
+        }
+
+        // Normal case - deserialize as a regular request
         let request: Request = serde_json::from_slice(&data)
             .map_err(|e| format!("Failed to deserialize request: {}", e))?;
         let app_state: AppState = serde_json::from_slice(&state.unwrap_or_default())
@@ -247,8 +290,27 @@ impl MessageServerClient for Actor {
         match request.method.as_str() {
             "initialize" => {
                 log("Received initialize request");
-                app_state.send_message("initialize", None)?;
-            }
+                
+                // Include proper initialization parameters
+                let init_params = json!({
+                    "capabilities": {
+                        "tools": {
+                            "supportsFileOperations": true
+                        }
+                    },
+                    "clientInfo": {
+                        "name": "mcp-poc",
+                        "version": "0.1.0"
+                    }
+                });
+                
+                log("Sending initialize request to MCP server with parameters");
+                app_state.send_message("initialize", Some(init_params))?;
+            },
+            "list_allowed_dirs" => {
+                log("Sending list_allowed_dirs request");
+                app_state.send_message("list_allowed_dirs", None)?;
+            },
             _ => {
                 log(&format!("Unknown method: {}", request.method));
             }
@@ -314,6 +376,8 @@ impl MessageServerClient for Actor {
 #[derive(Serialize, Deserialize, Debug)]
 struct Request {
     method: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    params: Option<Value>,
 }
 
 bindings::export!(Actor with_types_in bindings);
