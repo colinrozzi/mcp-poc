@@ -1568,6 +1568,272 @@ pub mod ntwk {
                 }
             }
         }
+        /// # Timing Interface
+        ///
+        /// Provides time-related functions for actors to get the current time and control execution timing.
+        ///
+        /// ## Purpose
+        ///
+        /// The timing interface gives actors access to time information and timing control
+        /// within the Theater runtime. It allows actors to:
+        /// - Get the current time
+        /// - Pause execution for specific durations
+        /// - Delay execution until specific points in time
+        ///
+        /// ## Example
+        ///
+        /// ```rust
+        /// use ntwk::theater::timing;
+        ///
+        /// async fn example() -> Result<(), String> {
+        ///     // Get the current time
+        ///     let now = timing::now();
+        ///     println!("Current time: {}", now);
+        ///
+        ///     // Sleep for 500 milliseconds
+        ///     timing::sleep(500)?;
+        ///
+        ///     // Wait until a specific future time
+        ///     let five_seconds_later = now + 5000;
+        ///     timing::deadline(five_seconds_later)?;
+        ///
+        ///     Ok(())
+        /// }
+        /// ```
+        ///
+        /// ## Security
+        ///
+        /// The timing operations are managed by the Theater runtime, which may enforce:
+        /// - Rate limits on sleep operations to prevent resource exhaustion
+        /// - Maximum duration limits to prevent indefinite blocking
+        /// - Tracking and reporting of sleep patterns in the event chain
+        ///
+        /// ## Implementation Notes
+        ///
+        /// When actors call timing functions, the WebAssembly execution is suspended without
+        /// blocking the entire runtime. This allows the runtime to continue processing other
+        /// actors while an actor is waiting.
+        #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
+        pub mod timing {
+            #[used]
+            #[doc(hidden)]
+            static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
+            use super::super::super::_rt;
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Get current time
+            ///
+            /// Returns the current time in milliseconds since the UNIX epoch (January 1, 1970 UTC).
+            ///
+            /// ## Returns
+            ///
+            /// The current timestamp in milliseconds
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::timing;
+            ///
+            /// // Get current timestamp
+            /// let now = timing::now();
+            ///
+            /// // Convert to seconds
+            /// let seconds_since_epoch = now / 1000;
+            /// ```
+            ///
+            /// ## Implementation Notes
+            ///
+            /// The time value is consistent across the entire Theater runtime, ensuring that
+            /// all actors have a synchronized view of time.
+            pub fn now() -> u64 {
+                unsafe {
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/timing")]
+                    unsafe extern "C" {
+                        #[link_name = "now"]
+                        fn wit_import0() -> i64;
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import0() -> i64 {
+                        unreachable!()
+                    }
+                    let ret = unsafe { wit_import0() };
+                    ret as u64
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Pause execution
+            ///
+            /// Pauses the execution of the actor for the specified number of milliseconds.
+            ///
+            /// ## Parameters
+            ///
+            /// * `duration` - Number of milliseconds to sleep
+            ///
+            /// ## Returns
+            ///
+            /// * `Ok(_)` - Sleep completed successfully
+            /// * `Err(string)` - Error message if sleep was interrupted or not allowed
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::timing;
+            ///
+            /// // Sleep for 1 second
+            /// timing::sleep(1000)?;
+            ///
+            /// // Sleep for 100ms
+            /// timing::sleep(100)?;
+            /// ```
+            ///
+            /// ## Security
+            ///
+            /// The runtime may enforce limits on how long an actor can sleep to prevent
+            /// resource exhaustion or denial of service. Sleep operations are recorded
+            /// in the actor's event chain.
+            pub fn sleep(duration: u64) -> Result<(), _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/timing")]
+                    unsafe extern "C" {
+                        #[link_name = "sleep"]
+                        fn wit_import1(_: i64, _: *mut u8);
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import1(_: i64, _: *mut u8) {
+                        unreachable!()
+                    }
+                    unsafe { wit_import1(_rt::as_i64(&duration), ptr0) };
+                    let l2 = i32::from(*ptr0.add(0).cast::<u8>());
+                    let result6 = match l2 {
+                        0 => {
+                            let e = ();
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l3 = *ptr0
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l4 = *ptr0
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len5 = l4;
+                                let bytes5 = _rt::Vec::from_raw_parts(
+                                    l3.cast(),
+                                    len5,
+                                    len5,
+                                );
+                                _rt::string_lift(bytes5)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result6
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Wait until specific time
+            ///
+            /// Pauses execution until the specified timestamp is reached.
+            ///
+            /// ## Parameters
+            ///
+            /// * `timestamp` - Target time in milliseconds since UNIX epoch
+            ///
+            /// ## Returns
+            ///
+            /// * `Ok(_)` - Deadline was reached successfully
+            /// * `Err(string)` - Error message if the wait was interrupted or not allowed
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::timing;
+            ///
+            /// // Wait until a specific time
+            /// let target_time = 1672531200000; // Jan 1, 2023 00:00:00 UTC
+            /// timing::deadline(target_time)?;
+            ///
+            /// // Wait until 10 seconds from now
+            /// let now = timing::now();
+            /// let ten_seconds_later = now + 10000;
+            /// timing::deadline(ten_seconds_later)?;
+            /// ```
+            ///
+            /// ## Implementation Notes
+            ///
+            /// - If the specified timestamp is in the past, the function returns immediately
+            /// - The runtime may reject excessive deadline values that are too far in the future
+            /// - Deadline operations are recorded in the actor's event chain
+            pub fn deadline(timestamp: u64) -> Result<(), _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/timing")]
+                    unsafe extern "C" {
+                        #[link_name = "deadline"]
+                        fn wit_import1(_: i64, _: *mut u8);
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import1(_: i64, _: *mut u8) {
+                        unreachable!()
+                    }
+                    unsafe { wit_import1(_rt::as_i64(&timestamp), ptr0) };
+                    let l2 = i32::from(*ptr0.add(0).cast::<u8>());
+                    let result6 = match l2 {
+                        0 => {
+                            let e = ();
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l3 = *ptr0
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l4 = *ptr0
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len5 = l4;
+                                let bytes5 = _rt::Vec::from_raw_parts(
+                                    l3.cast(),
+                                    len5,
+                                    len5,
+                                );
+                                _rt::string_lift(bytes5)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result6
+                }
+            }
+        }
     }
 }
 #[rustfmt::skip]
@@ -3296,9 +3562,9 @@ pub(crate) use __export_hello_world_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1978] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb8\x0e\x01A\x02\x01\
-A\x15\x01B\x14\x01p}\x04\0\x04json\x03\0\0\x01p}\x01k\x02\x04\0\x05state\x03\0\x03\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2077] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x9b\x0f\x01A\x02\x01\
+A\x17\x01B\x14\x01p}\x04\0\x04json\x03\0\0\x01p}\x01k\x02\x04\0\x05state\x03\0\x03\
 \x01s\x04\0\x08actor-id\x03\0\x05\x01s\x04\0\x0achannel-id\x03\0\x07\x01k\x01\x01\
 r\x02\x08accepted\x7f\x07message\x09\x04\0\x0echannel-accept\x03\0\x0a\x01kw\x01\
 r\x03\x0aevent-types\x06parent\x0c\x04data\x01\x04\0\x05event\x03\0\x0d\x01r\x02\
@@ -3325,27 +3591,29 @@ json\x03\0\0\x02\x03\x02\x01\x03\x04\0\x08actor-id\x03\0\x02\x02\x03\x02\x01\x06
 \0\x08\x04\0\x07request\x01\x09\x01j\x01\x05\x01s\x01@\x02\x08actor-id\x03\x0bin\
 itial-msg\x01\0\x0a\x04\0\x0copen-channel\x01\x0b\x01@\x02\x0achannel-id\x05\x03\
 msg\x01\0\x06\x04\0\x0fsend-on-channel\x01\x0c\x01@\x01\x0achannel-id\x05\0\x06\x04\
-\0\x0dclose-channel\x01\x0d\x03\0\x20ntwk:theater/message-server-host\x05\x07\x02\
-\x03\0\0\x05state\x01B\x07\x02\x03\x02\x01\x08\x04\0\x05state\x03\0\0\x01o\x01s\x01\
-o\x01\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\0\x04i\
-nit\x01\x05\x04\0\x12ntwk:theater/actor\x05\x09\x02\x03\0\0\x05event\x02\x03\0\0\
-\x0echannel-accept\x01B\x1d\x02\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x02\x03\x02\
-\x01\x0a\x04\0\x05event\x03\0\x02\x02\x03\x02\x01\x06\x04\0\x0achannel-id\x03\0\x04\
-\x02\x03\x02\x01\x0b\x04\0\x0echannel-accept\x03\0\x06\x01k\x01\x01o\x01\x01\x01\
-o\x01\x08\x01j\x01\x0a\x01s\x01@\x02\x05state\x08\x06params\x09\0\x0b\x04\0\x0bh\
-andle-send\x01\x0c\x01o\x02\x08\x09\x01j\x01\x0d\x01s\x01@\x02\x05state\x08\x06p\
-arams\x09\0\x0e\x04\0\x0ehandle-request\x01\x0f\x01o\x01\x07\x01o\x02\x08\x10\x01\
-j\x01\x11\x01s\x01@\x02\x05state\x08\x06params\x09\0\x12\x04\0\x13handle-channel\
--open\x01\x13\x01o\x02\x05\x01\x01@\x02\x05state\x08\x06params\x14\0\x0b\x04\0\x16\
-handle-channel-message\x01\x15\x01o\x01\x05\x01@\x02\x05state\x08\x06params\x16\0\
-\x0b\x04\0\x14handle-channel-close\x01\x17\x04\0\"ntwk:theater/message-server-cl\
-ient\x05\x0c\x01B\x0d\x02\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x01k\x01\x01p}\x01\
-o\x02w\x03\x01o\x01\x02\x01j\x01\x05\x01s\x01@\x02\x05state\x02\x06params\x04\0\x06\
-\x04\0\x0dhandle-stdout\x01\x07\x04\0\x0dhandle-stderr\x01\x07\x01o\x02wz\x01@\x02\
-\x05state\x02\x06params\x08\0\x06\x04\0\x0bhandle-exit\x01\x09\x04\0\x1dntwk:the\
-ater/process-handlers\x05\x0d\x04\0\x18ntwk:theater/hello-world\x04\0\x0b\x11\x01\
-\0\x0bhello-world\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-compone\
-nt\x070.227.1\x10wit-bindgen-rust\x060.41.0";
+\0\x0dclose-channel\x01\x0d\x03\0\x20ntwk:theater/message-server-host\x05\x07\x01\
+B\x07\x01@\0\0w\x04\0\x03now\x01\0\x01j\0\x01s\x01@\x01\x08durationw\0\x01\x04\0\
+\x05sleep\x01\x02\x01@\x01\x09timestampw\0\x01\x04\0\x08deadline\x01\x03\x03\0\x13\
+ntwk:theater/timing\x05\x08\x02\x03\0\0\x05state\x01B\x07\x02\x03\x02\x01\x09\x04\
+\0\x05state\x03\0\0\x01o\x01s\x01o\x01\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\
+\x06params\x02\0\x04\x04\0\x04init\x01\x05\x04\0\x12ntwk:theater/actor\x05\x0a\x02\
+\x03\0\0\x05event\x02\x03\0\0\x0echannel-accept\x01B\x1d\x02\x03\x02\x01\x01\x04\
+\0\x04json\x03\0\0\x02\x03\x02\x01\x0b\x04\0\x05event\x03\0\x02\x02\x03\x02\x01\x06\
+\x04\0\x0achannel-id\x03\0\x04\x02\x03\x02\x01\x0c\x04\0\x0echannel-accept\x03\0\
+\x06\x01k\x01\x01o\x01\x01\x01o\x01\x08\x01j\x01\x0a\x01s\x01@\x02\x05state\x08\x06\
+params\x09\0\x0b\x04\0\x0bhandle-send\x01\x0c\x01o\x02\x08\x09\x01j\x01\x0d\x01s\
+\x01@\x02\x05state\x08\x06params\x09\0\x0e\x04\0\x0ehandle-request\x01\x0f\x01o\x01\
+\x07\x01o\x02\x08\x10\x01j\x01\x11\x01s\x01@\x02\x05state\x08\x06params\x09\0\x12\
+\x04\0\x13handle-channel-open\x01\x13\x01o\x02\x05\x01\x01@\x02\x05state\x08\x06\
+params\x14\0\x0b\x04\0\x16handle-channel-message\x01\x15\x01o\x01\x05\x01@\x02\x05\
+state\x08\x06params\x16\0\x0b\x04\0\x14handle-channel-close\x01\x17\x04\0\"ntwk:\
+theater/message-server-client\x05\x0d\x01B\x0d\x02\x03\x02\x01\x01\x04\0\x04json\
+\x03\0\0\x01k\x01\x01p}\x01o\x02w\x03\x01o\x01\x02\x01j\x01\x05\x01s\x01@\x02\x05\
+state\x02\x06params\x04\0\x06\x04\0\x0dhandle-stdout\x01\x07\x04\0\x0dhandle-std\
+err\x01\x07\x01o\x02wz\x01@\x02\x05state\x02\x06params\x08\0\x06\x04\0\x0bhandle\
+-exit\x01\x09\x04\0\x1dntwk:theater/process-handlers\x05\x0e\x04\0\x18ntwk:theat\
+er/hello-world\x04\0\x0b\x11\x01\0\x0bhello-world\x03\0\0\0G\x09producers\x01\x0c\
+processed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {
