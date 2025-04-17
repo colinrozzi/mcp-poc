@@ -14,3 +14,8 @@ config = {}
 [[handlers]]
 type = "process"
 config = {}
+
+[[handlers]]
+type = "timing"
+config = {}
+

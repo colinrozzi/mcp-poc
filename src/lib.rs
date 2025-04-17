@@ -8,12 +8,13 @@ use crate::bindings::ntwk::theater::process::{
     os_spawn, os_write_stdin, OutputMode,
 };
 use crate::bindings::ntwk::theater::runtime::log;
+use crate::bindings::ntwk::theater::timing::now;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
+
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct PendingRequest {
@@ -51,12 +52,11 @@ impl Default for AppState {
 }
 
 impl AppState {
-    // Get the current timestamp in seconds
+    // Get the current timestamp in seconds using the Theater timing interface
     fn now() -> Result<u64, String> {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .map_err(|e| e.to_string())
+        let timestamp_ms = now();
+        // Convert milliseconds to seconds
+        Ok(timestamp_ms / 1000)
     }
     // Check if the server supports a specific capability
     fn can_use_capability(&self, capability: &str) -> bool {
