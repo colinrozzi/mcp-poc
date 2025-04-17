@@ -151,20 +151,19 @@ struct McpRequest {
 // Actor API request structures
 
 #[derive(Serialize, Deserialize, Debug)]
-struct InitializeRequest {
-    caller_id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ToolsListRequest {
-    caller_id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ToolsCallRequest {
-    caller_id: String,
-    name: String,
-    args: Value,
+#[serde(tag = "type")]
+enum McpActorRequest {
+    Initialize {
+        caller_id: String,
+    },
+    ToolsList {
+        caller_id: String,
+    },
+    ToolsCall {
+        caller_id: String,
+        name: String,
+        args: Value,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -237,9 +236,8 @@ impl Guest for Actor {
         let mut updated_state = app_state;
         updated_state.server_pid = Some(pid);
 
-        let init_message = Request {
-            method: "initialize".to_string(),
-            params: None,
+        let init_message = McpActorRequest::Initialize {
+            caller_id: self_id.clone(),
         };
 
         send(
@@ -375,12 +373,6 @@ impl MessageServerClient for Actor {
         let (data,) = params;
         log(&format!("Data: {:?}", data));
 
-        // Try to make sense of the array-like data
-        let request_str = String::from_utf8(data.clone())
-            .map_err(|e| format!("Failed to convert data to string: {}", e))?;
-
-        log(&format!("Request string: {}", request_str));
-
         // Parse the current state
         let mut app_state: AppState = match state {
             Some(state_bytes) if !state_bytes.is_empty() => serde_json::from_slice(&state_bytes)
@@ -388,108 +380,147 @@ impl MessageServerClient for Actor {
             _ => AppState::default(),
         };
 
-        if let Ok(request) = serde_json::from_slice::<ToolsListRequest>(&data) {
-            log("Received tools_list request");
-
-            // Check if server is initialized
-            if !app_state.server_initialized {
-                return Err("MCP server not initialized".to_string());
-            }
-
-            // Check if server supports tools capability
-            if !app_state.can_use_capability("tools") {
-                return Err("Server does not support tools capability".to_string());
-            }
-
-            // Generate request ID
-            let id = app_state.generate_request_id();
-
-            // Create pending request record
-            let pending = PendingRequest {
-                id,
-                caller_id: request.caller_id,
-                method: "tools/list".to_string(),
-                timestamp: AppState::now()?,
-                params: None,
-            };
-
-            // Add to pending requests map
-            app_state.pending_requests.insert(id, pending);
-
-            // Create and send MCP tools/list request
-            let mcp_request = McpRequest {
-                jsonrpc: "2.0".to_string(),
-                id,
-                method: "tools/list".to_string(),
-                params: None,
-            };
-
-            let request_json =
-                serde_json::to_string(&mcp_request).map_err(|e| e.to_string())? + "\n";
-            log(&format!("Sending tools/list request: {}", request_json));
-
-            os_write_stdin(app_state.server_pid.unwrap(), request_json.as_bytes())
-                .map_err(|e| format!("Failed to write to stdin: {}", e))?;
+        // Check for timed out requests
+        if let Err(e) = app_state.check_timeouts() {
+            log(&format!("Error checking timeouts: {}", e));
         }
-        // Try to parse as a tools/call request
-        else if let Ok(request) = serde_json::from_slice::<ToolsCallRequest>(&data) {
-            log("Received tools_call request");
 
-            // Check if server is initialized
-            if !app_state.server_initialized {
-                return Err("MCP server not initialized".to_string());
+        // Parse the request
+        let request = match serde_json::from_slice::<McpActorRequest>(&data) {
+            Ok(req) => req,
+            Err(e) => {
+                log(&format!("Failed to parse request: {}", e));
+                return Err("Unknown request format".to_string());
+            }
+        };
+
+        // Process the request based on its type
+        match request {
+            McpActorRequest::Initialize { caller_id } => {
+                log("Received initialize request");
+
+                // Include proper initialization parameters with protocol version
+                let init_params = json!({
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {
+                            "supportsFileOperations": true
+                        }
+                    },
+                    "clientInfo": {
+                        "name": "mcp-poc",
+                        "version": "0.1.0"
+                    }
+                });
+
+                log("Sending initialize request to MCP server with parameters");
+                app_state.send_message("initialize", Some(init_params))?;
             }
 
-            // Check if server supports tools capability
-            if !app_state.can_use_capability("tools") {
-                return Err("Server does not support tools capability".to_string());
+            McpActorRequest::ToolsList { caller_id } => {
+                log("Received tools_list request");
+
+                // Check if server is initialized
+                if !app_state.server_initialized {
+                    return Err("MCP server not initialized".to_string());
+                }
+
+                // Check if server supports tools capability
+                if !app_state.can_use_capability("tools") {
+                    return Err("Server does not support tools capability".to_string());
+                }
+
+                // Generate request ID
+                let id = app_state.generate_request_id();
+
+                // Create pending request record
+                let pending = PendingRequest {
+                    id,
+                    caller_id,
+                    method: "tools/list".to_string(),
+                    timestamp: AppState::now()?,
+                    params: None,
+                };
+
+                // Add to pending requests map
+                app_state.pending_requests.insert(id, pending);
+
+                // Send tools/list request
+                let mcp_request = McpRequest {
+                    jsonrpc: "2.0".to_string(),
+                    id,
+                    method: "tools/list".to_string(),
+                    params: None,
+                };
+
+                let request_json =
+                    serde_json::to_string(&mcp_request).map_err(|e| e.to_string())? + "\n";
+                log(&format!("Sending tools/list request: {}", request_json));
+
+                os_write_stdin(app_state.server_pid.unwrap(), request_json.as_bytes())
+                    .map_err(|e| format!("Failed to write to stdin: {}", e))?;
             }
 
-            // Generate request ID
-            let id = app_state.generate_request_id();
+            McpActorRequest::ToolsCall {
+                caller_id,
+                name,
+                args,
+            } => {
+                log("Received tools_call request");
 
-            // Create pending request record
-            let pending = PendingRequest {
-                id,
-                caller_id: request.caller_id,
-                method: "tools/call".to_string(),
-                timestamp: AppState::now()?,
-                params: Some(json!({
-                    "name": request.name,
-                    "arguments": request.args
-                })),
-            };
+                // Check if server is initialized
+                if !app_state.server_initialized {
+                    return Err("MCP server not initialized".to_string());
+                }
 
-            // Add to pending requests map
-            app_state.pending_requests.insert(id, pending);
+                // Check if server supports tools capability
+                if !app_state.can_use_capability("tools") {
+                    return Err("Server does not support tools capability".to_string());
+                }
 
-            // Create and send MCP tools/call request
-            let mcp_request = McpRequest {
-                jsonrpc: "2.0".to_string(),
-                id,
-                method: "tools/call".to_string(),
-                params: Some(json!({
-                    "name": request.name,
-                    "arguments": request.args
-                })),
-            };
+                // Generate request ID
+                let id = app_state.generate_request_id();
 
-            let request_json =
-                serde_json::to_string(&mcp_request).map_err(|e| e.to_string())? + "\n";
-            log(&format!("Sending tools/call request: {}", request_json));
+                // Create pending request record
+                let pending = PendingRequest {
+                    id,
+                    caller_id,
+                    method: "tools/call".to_string(),
+                    timestamp: AppState::now()?,
+                    params: Some(json!({
+                        "name": name,
+                        "arguments": args
+                    })),
+                };
 
-            os_write_stdin(app_state.server_pid.unwrap(), request_json.as_bytes())
-                .map_err(|e| format!("Failed to write to stdin: {}", e))?;
-        } else {
-            log("Failed to parse request as any known request type");
-            return Err("Unknown request format".to_string());
+                // Add to pending requests map
+                app_state.pending_requests.insert(id, pending);
+
+                // Send tools/call request
+                let mcp_request = McpRequest {
+                    jsonrpc: "2.0".to_string(),
+                    id,
+                    method: "tools/call".to_string(),
+                    params: Some(json!({
+                        "name": name,
+                        "arguments": args
+                    })),
+                };
+
+                let request_json =
+                    serde_json::to_string(&mcp_request).map_err(|e| e.to_string())? + "\n";
+                log(&format!("Sending tools/call request: {}", request_json));
+
+                os_write_stdin(app_state.server_pid.unwrap(), request_json.as_bytes())
+                    .map_err(|e| format!("Failed to write to stdin: {}", e))?;
+            }
         }
 
         // Serialize the app state
         let updated_state = serde_json::to_vec(&app_state).map_err(|e| e.to_string())?;
 
         // Return updated state
-        return Ok((Some(updated_state),));
+        Ok((Some(updated_state),))
     }
 
     fn handle_request(
@@ -542,12 +573,7 @@ impl MessageServerClient for Actor {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Request {
-    method: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    params: Option<Value>,
-}
+// This struct is no longer used as we now use the McpActorRequest enum
 
 // Helper function to handle process stdout data in a message
 fn handle_process_stdout(
