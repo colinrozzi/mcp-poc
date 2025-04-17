@@ -274,11 +274,27 @@ impl MessageServerClient for Actor {
         let request_str = String::from_utf8(data.clone())
             .map_err(|e| format!("Failed to convert data to string: {}", e))?;
 
+        log(&format!("Request string: {}", request_str));
+
         // Check if this is a process message (handle-stdout)
         if request_str.starts_with("[") && request_str.contains("handle-stdout") {
             log("Received process stdout data");
             // This is process stdout data, we should handle it specially
             return handle_process_stdout(state, request_str);
+        }
+            
+        // Another approach: if data starts with '[' character (91 in ASCII)
+        if !data.is_empty() && data[0] == 91 {
+            log("Detected array-like message format");
+            // Try to decode manually
+            let message_str = format!("{:?}", data);
+            log(&format!("Message as string: {}", message_str));
+            
+            // This is likely a process message
+            if message_str.contains("handle-stdout") {
+                log("Detected stdout handler message");
+                return handle_process_stdout(state, message_str);
+            }
         }
 
         // Normal case - deserialize as a regular request
@@ -291,8 +307,9 @@ impl MessageServerClient for Actor {
             "initialize" => {
                 log("Received initialize request");
                 
-                // Include proper initialization parameters
+                // Include proper initialization parameters with protocol version
                 let init_params = json!({
+                    "protocolVersion": "2024-11-05",
                     "capabilities": {
                         "tools": {
                             "supportsFileOperations": true
@@ -309,7 +326,11 @@ impl MessageServerClient for Actor {
             },
             "list_allowed_dirs" => {
                 log("Sending list_allowed_dirs request");
-                app_state.send_message("list_allowed_dirs", None)?;
+                // Call the FS MCP server's list_allowed_dirs tool
+                app_state.send_message("tools/invoke", Some(json!({
+                    "name": "list_allowed_dirs", 
+                    "parameters": {}
+                })))?;
             },
             _ => {
                 log(&format!("Unknown method: {}", request.method));
@@ -378,6 +399,135 @@ struct Request {
     method: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     params: Option<Value>,
+}
+
+// Helper function to handle process stdout data in a message
+fn handle_process_stdout(state: Option<Vec<u8>>, request_str: String) -> Result<(Option<Vec<u8>>,), String> {
+    log("Handling process stdout data");
+
+    // Parse the current state
+    let state_bytes = state.unwrap_or_default();
+    if state_bytes.is_empty() {
+        return Ok((None,));
+    }
+
+    let app_state: AppState = serde_json::from_slice(&state_bytes)
+        .map_err(|e| format!("Failed to deserialize state: {}", e))?;
+
+    // Log the original request string for debugging
+    log(&format!("Processing request string: {}", request_str));
+    
+    // Extract the data from the request string manually
+    let parts: Vec<&str> = request_str.trim_matches(|c| c == '[' || c == ']').split(',').collect();
+    log(&format!("Split into {} parts", parts.len()));
+    
+    if parts.len() >= 3 && parts[0].contains("handle-stdout") {
+        // Get process ID (usually the second element)
+        let process_id_str = parts[1].trim();
+        log(&format!("Process ID string: {}", process_id_str));
+        
+        // Extract the remaining parts as the data array
+        let data_parts = &parts[2..];
+        log(&format!("Data parts count: {}", data_parts.len()));
+        
+        // Convert the numeric values to bytes
+        let mut bytes = Vec::new();
+        for part in data_parts {
+            let part = part.trim();
+            if let Ok(byte_val) = part.parse::<u8>() {
+                bytes.push(byte_val);
+            }
+        }
+        
+        log(&format!("Extracted {} bytes", bytes.len()));
+        
+        if !bytes.is_empty() {
+            // Try to convert to a string
+            if let Ok(stdout_data) = String::from_utf8(bytes.clone()) {
+                log(&format!("Converted to string: {}", stdout_data));
+                
+                // Check if this is a JSON-RPC response
+                // Try to fix malformed JSON if needed
+                let json_data = if !stdout_data.starts_with('{') && stdout_data.contains("jsonrpc") {
+                    log("Attempting to fix malformed JSON response");
+                    format!("{{{}", stdout_data)
+                } else {
+                    stdout_data
+                };
+
+                if json_data.contains("jsonrpc") {
+                    log(&format!("Processing JSON-RPC response: {}", json_data));
+                    
+                    match serde_json::from_str::<McpResponse>(&json_data) {
+                        Ok(response) => {
+                            log(&format!("Parsed MCP response ID: {}", response.id));
+                            
+                            // Update app state
+                            let mut app_state: AppState = serde_json::from_slice(&state_bytes)
+                                .map_err(|e| format!("Failed to deserialize state: {}", e))?;
+                            
+                            // Check for initialization response
+                            if response.id == 0 {
+                                if response.error.is_none() {
+                                    log("Server initialization successful");
+                                    app_state.server_initialized = true;
+                                    
+                                    // Extract server info and capabilities if available
+                                    if let Some(result) = &response.result {
+                                        log(&format!("Initialization result: {}", result));
+                                    }
+                                    
+                                    // Send the initialized notification after initializing
+                                    let pid = app_state.server_pid.expect("Missing server PID");
+                                    let init_notification = json!({
+                                        "jsonrpc": "2.0",
+                                        "method": "notifications/initialized"
+                                    });
+                                    
+                                    let notification_json = serde_json::to_string(&init_notification)
+                                        .map_err(|e| format!("Failed to serialize notification: {}", e))? + "\n";
+                                    
+                                    log("Sending initialized notification");
+                                    os_write_stdin(pid, notification_json.as_bytes())
+                                        .map_err(|e| format!("Failed to send notification: {}", e))?;
+                                        
+                                    // After initialization, we can test with list_allowed_dirs
+                                    log("MCP connection established. Ready for commands.");
+                                } else if let Some(error) = &response.error {
+                                    log(&format!("Server initialization failed: {} (code: {})", 
+                                        error.message, error.code));
+                                }
+                            }
+                            
+                            // Serialize and return the updated state
+                            let updated_state = serde_json::to_vec(&app_state)
+                                .map_err(|e| format!("Failed to serialize updated state: {}", e))?;
+                            
+                            return Ok((Some(updated_state),));
+                        },
+                        Err(e) => {
+                            log(&format!("Failed to parse MCP response: {}", e));
+                            
+                            // Try parsing with a more lenient approach
+                            if json_data.contains("error") {
+                                log("Attempting to extract error information");
+                                if let Ok(value) = serde_json::from_str::<serde_json::Value>(&json_data) {
+                                    if let Some(error) = value.get("error") {
+                                        log(&format!("Error in response: {}", error));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                log("Not valid UTF-8 data");
+            }
+        }
+    }
+
+    // Return the state unchanged
+    Ok((Some(state_bytes),))
 }
 
 bindings::export!(Actor with_types_in bindings);
