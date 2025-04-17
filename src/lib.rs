@@ -5,19 +5,23 @@ use crate::bindings::exports::ntwk::theater::message_server_client::Guest as Mes
 use crate::bindings::exports::ntwk::theater::process_handlers::Guest as ProcessHandlers;
 use crate::bindings::ntwk::theater::message_server_host::send;
 use crate::bindings::ntwk::theater::process::{
-    os_kill, os_signal, os_spawn, os_status, os_write_stdin, OutputMode,
+    os_spawn, os_write_stdin, OutputMode,
 };
 use crate::bindings::ntwk::theater::runtime::log;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct PendingRequest {
-    id: u32,
-    method: String,
-    params: Option<Value>,
+    id: u32,                  // MCP request ID
+    caller_id: String,        // Actor ID that made the request
+    method: String,           // Original method requested
+    timestamp: u64,           // When the request was made (for timeouts)
+    params: Option<Value>,    // Original parameters
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -26,7 +30,12 @@ struct AppState {
     server_pid: Option<u64>,
     server_initialized: bool,
 
+    // Request tracking
     request_id: AtomicU32,
+    pending_requests: HashMap<u32, PendingRequest>,
+    
+    // Server capabilities
+    server_capabilities: Option<Value>,
 }
 
 impl Default for AppState {
@@ -35,11 +44,73 @@ impl Default for AppState {
             server_pid: None,
             server_initialized: false,
             request_id: AtomicU32::new(0),
+            pending_requests: HashMap::new(),
+            server_capabilities: None,
         }
     }
 }
 
 impl AppState {
+    // Get the current timestamp in seconds
+    fn now() -> Result<u64, String> {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .map_err(|e| e.to_string())
+    }
+    // Check if the server supports a specific capability
+    fn can_use_capability(&self, capability: &str) -> bool {
+        if let Some(capabilities) = &self.server_capabilities {
+            // Check if the capability exists in the server's capabilities
+            capabilities.get(capability).is_some()
+        } else {
+            false
+        }
+    }
+    
+    // Check for and handle timed out requests
+    fn check_timeouts(&mut self) -> Result<(), String> {
+        let now = Self::now()?;
+        
+        let timeout_threshold = 30; // 30 seconds timeout
+        
+        // Find timed out requests
+        let timed_out: Vec<u32> = self.pending_requests
+            .iter()
+            .filter(|(_, req)| now - req.timestamp > timeout_threshold)
+            .map(|(id, _)| *id)
+            .collect();
+        
+        // Send timeout errors to callers
+        for id in &timed_out {
+            if let Some(req) = self.pending_requests.get(id) {
+                let error_message = json!({
+                    "request_id": id,
+                    "method": req.method.clone(),
+                    "result": null,
+                    "error": {
+                        "code": -32000,
+                        "message": "Request timed out"
+                    }
+                });
+                
+                // Best effort send - ignore errors
+                let _ = send(
+                    &req.caller_id, 
+                    &serde_json::to_vec(&error_message).unwrap_or_default()
+                );
+                
+                log(&format!("Request {} timed out, sent error to {}", id, req.caller_id));
+            }
+        }
+        
+        // Remove timed out requests
+        for id in timed_out {
+            self.pending_requests.remove(&id);
+        }
+        
+        Ok(())
+    }
     fn send_message(&self, method: &str, params: Option<Value>) -> Result<(), String> {
         let id = self.generate_request_id();
         let request = McpRequest {
@@ -65,6 +136,8 @@ impl AppState {
     }
 }
 
+// Actor API request structures
+
 #[derive(Serialize, Deserialize, Debug)]
 struct McpRequest {
     jsonrpc: String,
@@ -72,6 +145,25 @@ struct McpRequest {
     method: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     params: Option<Value>,
+}
+
+// Actor API request structures
+
+#[derive(Serialize, Deserialize, Debug)]
+struct InitializeRequest {
+    caller_id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ToolsListRequest {
+    caller_id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ToolsCallRequest {
+    caller_id: String,
+    name: String,
+    args: Value,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -297,56 +389,163 @@ impl MessageServerClient for Actor {
             }
         }
 
-        // Normal case - deserialize as a regular request
-        let request: Request = serde_json::from_slice(&data)
-            .map_err(|e| format!("Failed to deserialize request: {}", e))?;
-        let app_state: AppState = serde_json::from_slice(&state.unwrap_or_default())
-            .map_err(|e| format!("Failed to deserialize state: {}", e))?;
-
-        match request.method.as_str() {
-            "initialize" => {
-                log("Received initialize request");
-                
-                // Include proper initialization parameters with protocol version
-                let init_params = json!({
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "tools": {
-                            "supportsFileOperations": true
-                        }
-                    },
-                    "clientInfo": {
-                        "name": "mcp-poc",
-                        "version": "0.1.0"
-                    }
-                });
-                
-                log("Sending initialize request to MCP server with parameters");
-                app_state.send_message("initialize", Some(init_params))?;
+        // Parse the current state
+        let mut app_state: AppState = match state {
+            Some(state_bytes) if !state_bytes.is_empty() => {
+                serde_json::from_slice(&state_bytes)
+                    .map_err(|e| format!("Failed to deserialize state: {}", e))?
             },
-            "list_allowed_dirs" => {
-                log("Sending list_allowed_dirs request");
-                // Call the FS MCP server's list_allowed_dirs tool
-                app_state.send_message("tools/invoke", Some(json!({
-                    "name": "list_allowed_dirs", 
-                    "parameters": {}
-                })))?;
-            },
-            _ => {
-                log(&format!("Unknown method: {}", request.method));
-            }
+            _ => AppState::default(),
+        };
+        
+        // Check for timed out requests
+        if let Err(e) = app_state.check_timeouts() {
+            log(&format!("Error checking timeouts: {}", e));
         }
 
+        // Try to parse as a standard request first
+        if let Ok(request) = serde_json::from_slice::<Request>(&data) {
+            match request.method.as_str() {
+                "initialize" => {
+                    log("Received initialize request");
+                    
+                    // Include proper initialization parameters with protocol version
+                    let init_params = json!({
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {
+                            "tools": {
+                                "supportsFileOperations": true
+                            }
+                        },
+                        "clientInfo": {
+                            "name": "mcp-poc",
+                            "version": "0.1.0"
+                        }
+                    });
+                    
+                    log("Sending initialize request to MCP server with parameters");
+                    app_state.send_message("initialize", Some(init_params))?;
+                },
+                "list_allowed_dirs" => {
+                    log("Sending list_allowed_dirs request");
+                    // Call the FS MCP server's list_allowed_dirs tool
+                    app_state.send_message("tools/invoke", Some(json!({
+                        "name": "list_allowed_dirs", 
+                        "parameters": {}
+                    })))?;
+                },
+                _ => {
+                    log(&format!("Unknown method: {}", request.method));
+                }
+            }
+        } 
+        // Try to parse as a tools/list request
+        else if let Ok(request) = serde_json::from_slice::<ToolsListRequest>(&data) {
+            log("Received tools_list request");
+            
+            // Check if server is initialized
+            if !app_state.server_initialized {
+                return Err("MCP server not initialized".to_string());
+            }
+            
+            // Check if server supports tools capability
+            if !app_state.can_use_capability("tools") {
+                return Err("Server does not support tools capability".to_string());
+            }
+            
+            // Generate request ID
+            let id = app_state.generate_request_id();
+            
+            // Create pending request record
+            let pending = PendingRequest {
+                id,
+                caller_id: request.caller_id,
+                method: "tools/list".to_string(),
+                timestamp: AppState::now()?,
+                params: None,
+            };
+            
+            // Add to pending requests map
+            app_state.pending_requests.insert(id, pending);
+            
+            // Create and send MCP tools/list request
+            let mcp_request = McpRequest {
+                jsonrpc: "2.0".to_string(),
+                id,
+                method: "tools/list".to_string(),
+                params: None,
+            };
+            
+            let request_json = serde_json::to_string(&mcp_request).map_err(|e| e.to_string())? + "\n";
+            log(&format!("Sending tools/list request: {}", request_json));
+            
+            os_write_stdin(app_state.server_pid.unwrap(), request_json.as_bytes())
+                .map_err(|e| format!("Failed to write to stdin: {}", e))?;
+        }
+        // Try to parse as a tools/call request
+        else if let Ok(request) = serde_json::from_slice::<ToolsCallRequest>(&data) {
+            log("Received tools_call request");
+            
+            // Check if server is initialized
+            if !app_state.server_initialized {
+                return Err("MCP server not initialized".to_string());
+            }
+            
+            // Check if server supports tools capability
+            if !app_state.can_use_capability("tools") {
+                return Err("Server does not support tools capability".to_string());
+            }
+            
+            // Generate request ID
+            let id = app_state.generate_request_id();
+            
+            // Create pending request record
+            let pending = PendingRequest {
+                id,
+                caller_id: request.caller_id,
+                method: "tools/call".to_string(),
+                timestamp: AppState::now()?,
+                params: Some(json!({
+                    "name": request.name,
+                    "arguments": request.args
+                })),
+            };
+            
+            // Add to pending requests map
+            app_state.pending_requests.insert(id, pending);
+            
+            // Create and send MCP tools/call request
+            let mcp_request = McpRequest {
+                jsonrpc: "2.0".to_string(),
+                id,
+                method: "tools/call".to_string(),
+                params: Some(json!({
+                    "name": request.name,
+                    "arguments": request.args
+                })),
+            };
+            
+            let request_json = serde_json::to_string(&mcp_request).map_err(|e| e.to_string())? + "\n";
+            log(&format!("Sending tools/call request: {}", request_json));
+            
+            os_write_stdin(app_state.server_pid.unwrap(), request_json.as_bytes())
+                .map_err(|e| format!("Failed to write to stdin: {}", e))?;
+        }
+        else {
+            log("Failed to parse request as any known request type");
+            return Err("Unknown request format".to_string());
+        }
+        
         // Serialize the app state
-        let state_bytes = serde_json::to_vec(&app_state).map_err(|e| e.to_string())?;
-
-        // Return state unchanged
-        Ok((Some(state_bytes),))
+        let updated_state = serde_json::to_vec(&app_state).map_err(|e| e.to_string())?;
+        
+        // Return updated state
+        return Ok((Some(updated_state),));
     }
 
     fn handle_request(
         state: Option<Vec<u8>>,
-        params: (Vec<u8>,),
+        _params: (Vec<u8>,),
     ) -> Result<(Option<Vec<u8>>, (Vec<u8>,)), String> {
         log("Handling request message");
         Ok((state, (vec![],)))
@@ -354,7 +553,7 @@ impl MessageServerClient for Actor {
 
     fn handle_channel_open(
         state: Option<bindings::exports::ntwk::theater::message_server_client::Json>,
-        params: (bindings::exports::ntwk::theater::message_server_client::Json,),
+        _params: (bindings::exports::ntwk::theater::message_server_client::Json,),
     ) -> Result<
         (
             Option<bindings::exports::ntwk::theater::message_server_client::Json>,
@@ -375,7 +574,7 @@ impl MessageServerClient for Actor {
 
     fn handle_channel_close(
         state: Option<bindings::exports::ntwk::theater::message_server_client::Json>,
-        params: (String,),
+        _params: (String,),
     ) -> Result<(Option<bindings::exports::ntwk::theater::message_server_client::Json>,), String>
     {
         Ok((state,))
@@ -383,7 +582,7 @@ impl MessageServerClient for Actor {
 
     fn handle_channel_message(
         state: Option<bindings::exports::ntwk::theater::message_server_client::Json>,
-        params: (
+        _params: (
             String,
             bindings::exports::ntwk::theater::message_server_client::Json,
         ),
@@ -411,7 +610,7 @@ fn handle_process_stdout(state: Option<Vec<u8>>, request_str: String) -> Result<
         return Ok((None,));
     }
 
-    let app_state: AppState = serde_json::from_slice(&state_bytes)
+    let mut app_state: AppState = serde_json::from_slice(&state_bytes)
         .map_err(|e| format!("Failed to deserialize state: {}", e))?;
 
     // Log the original request string for debugging
@@ -466,7 +665,28 @@ fn handle_process_stdout(state: Option<Vec<u8>>, request_str: String) -> Result<
                             let mut app_state: AppState = serde_json::from_slice(&state_bytes)
                                 .map_err(|e| format!("Failed to deserialize state: {}", e))?;
                             
-                            // Check for initialization response
+                            // Look up the pending request
+                            if let Some(pending) = app_state.pending_requests.remove(&response.id) {
+                                log(&format!("Found pending request for ID {}: {}", response.id, pending.method));
+                                
+                                // Format a response for the caller
+                                let result_message = json!({
+                                    "request_id": response.id,
+                                    "method": pending.method,
+                                    "result": response.result,
+                                    "error": response.error
+                                });
+                                
+                                // Send the response back to the calling actor
+                                send(
+                                    &pending.caller_id, 
+                                    &serde_json::to_vec(&result_message).map_err(|e| e.to_string())?
+                                ).map_err(|e| format!("Failed to send response: {}", e))?;
+                                
+                                log(&format!("Sent response to caller {}", pending.caller_id));
+                            }
+                            
+                            // Special handling for initialization response
                             if response.id == 0 {
                                 if response.error.is_none() {
                                     log("Server initialization successful");
@@ -475,6 +695,9 @@ fn handle_process_stdout(state: Option<Vec<u8>>, request_str: String) -> Result<
                                     // Extract server info and capabilities if available
                                     if let Some(result) = &response.result {
                                         log(&format!("Initialization result: {}", result));
+                                        
+                                        // Store the server capabilities for later reference
+                                        app_state.server_capabilities = Some(result.clone());
                                     }
                                     
                                     // Send the initialized notification after initializing
@@ -491,7 +714,6 @@ fn handle_process_stdout(state: Option<Vec<u8>>, request_str: String) -> Result<
                                     os_write_stdin(pid, notification_json.as_bytes())
                                         .map_err(|e| format!("Failed to send notification: {}", e))?;
                                         
-                                    // After initialization, we can test with list_allowed_dirs
                                     log("MCP connection established. Ready for commands.");
                                 } else if let Some(error) = &response.error {
                                     log(&format!("Server initialization failed: {} (code: {})", 
@@ -515,6 +737,33 @@ fn handle_process_stdout(state: Option<Vec<u8>>, request_str: String) -> Result<
                                     if let Some(error) = value.get("error") {
                                         log(&format!("Error in response: {}", error));
                                     }
+                                    
+                                    // Try to extract the ID to match with pending requests
+                                    if let Some(id) = value.get("id").and_then(|id| id.as_u64()) {
+                                        let id = id as u32;
+                                        if let Some(pending) = app_state.pending_requests.get(&id).cloned() {
+                                            // Remove from pending requests
+                                            app_state.pending_requests.remove(&id);
+                                            // Send error response to the caller
+                                            let error_message = json!({
+                                                "request_id": id,
+                                                "method": pending.method,
+                                                "result": null,
+                                                "error": {
+                                                    "code": -32603,
+                                                    "message": "Internal server error: malformed response"
+                                                }
+                                            });
+                                            
+                                            // Best effort - ignore errors
+                                            let _ = send(
+                                                &pending.caller_id, 
+                                                &serde_json::to_vec(&error_message).unwrap_or_default()
+                                            );
+                                            
+                                            log(&format!("Sent error response to caller {}", pending.caller_id));
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -525,9 +774,12 @@ fn handle_process_stdout(state: Option<Vec<u8>>, request_str: String) -> Result<
             }
         }
     }
-
-    // Return the state unchanged
-    Ok((Some(state_bytes),))
+    
+    // Serialize and return the updated state
+    let updated_state = serde_json::to_vec(&app_state)
+        .map_err(|e| format!("Failed to serialize updated state: {}", e))?;
+    
+    Ok((Some(updated_state),))
 }
 
 bindings::export!(Actor with_types_in bindings);
