@@ -13,14 +13,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicU32, Ordering};
 
-// Counter for generating unique request IDs
-static REQUEST_ID: AtomicU32 = AtomicU32::new(1);
-
-// Get the next request ID
-fn next_request_id() -> u32 {
-    REQUEST_ID.fetch_add(1, Ordering::SeqCst)
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct PendingRequest {
     id: u32,
@@ -34,13 +26,7 @@ struct AppState {
     server_pid: Option<u64>,
     server_initialized: bool,
 
-    // MCP protocol state
-    pending_requests: Vec<PendingRequest>,
-    response_buffer: String,
-
-    // Server capabilities
-    available_tools: Vec<String>,
-    allowed_directories: Vec<String>,
+    request_id: AtomicU32,
 }
 
 impl Default for AppState {
@@ -48,11 +34,34 @@ impl Default for AppState {
         Self {
             server_pid: None,
             server_initialized: false,
-            pending_requests: Vec::new(),
-            response_buffer: String::new(),
-            available_tools: Vec::new(),
-            allowed_directories: Vec::new(),
+            request_id: AtomicU32::new(0),
         }
+    }
+}
+
+impl AppState {
+    fn send_message(&self, method: &str, params: Option<Value>) -> Result<(), String> {
+        let id = self.generate_request_id();
+        let request = McpRequest {
+            jsonrpc: "2.0".to_string(),
+            id,
+            method: method.to_string(),
+            params,
+        };
+
+        let request_json = serde_json::to_string(&request).map_err(|e| e.to_string())? + "\n";
+        log(&format!("Sending message: {}", request_json));
+
+        // Send the message to the server
+        os_write_stdin(self.server_pid.unwrap(), request_json.as_bytes())
+            .expect("Failed to write to stdin");
+        Ok(())
+    }
+
+    fn generate_request_id(&self) -> u32 {
+        let id = self.request_id.fetch_add(1, Ordering::SeqCst);
+        log(&format!("Generated request ID: {}", id));
+        id
     }
 }
 
@@ -103,7 +112,7 @@ impl Guest for Actor {
             program: server_path.to_string(),
             args: vec![
                 "--allowed-dirs".to_string(),
-                "/Users/colinrozzi/work".to_string(),
+                "/Users/colinrozzi/work/tmp".to_string(),
             ],
             env: vec![],
             cwd: None,
@@ -125,10 +134,18 @@ impl Guest for Actor {
         let mut updated_state = app_state;
         updated_state.server_pid = Some(pid);
 
+        let init_message = Request {
+            method: "initialize".to_string(),
+        };
+
+        send(
+            &self_id,
+            &serde_json::to_vec(&init_message).expect("Failed to serialize init message"),
+        )
+        .map_err(|e| format!("Failed to send init message: {}", e))?;
+
         // Serialize the app state
         let state_bytes = serde_json::to_vec(&updated_state).map_err(|e| e.to_string())?;
-
-        send(&self_id, b"initialize server").expect("Failed to send init message");
 
         // Return the updated state
         Ok((Some(state_bytes),))
@@ -220,15 +237,25 @@ impl MessageServerClient for Actor {
     ) -> Result<(Option<Vec<u8>>,), String> {
         log("Handling send message");
         let (data,) = params;
+        log(&format!("Data: {:?}", data));
 
-        // Parse the current state
-        let state_bytes = state.unwrap_or_default();
-        if state_bytes.is_empty() {
-            return Ok((None,));
+        let request: Request = serde_json::from_slice(&data)
+            .map_err(|e| format!("Failed to deserialize request: {}", e))?;
+        let app_state: AppState = serde_json::from_slice(&state.unwrap_or_default())
+            .map_err(|e| format!("Failed to deserialize state: {}", e))?;
+
+        match request.method.as_str() {
+            "initialize" => {
+                log("Received initialize request");
+                app_state.send_message("initialize", None)?;
+            }
+            _ => {
+                log(&format!("Unknown method: {}", request.method));
+            }
         }
 
-        let app_state: AppState = serde_json::from_slice(&state_bytes)
-            .map_err(|e| format!("Failed to deserialize state: {}", e))?;
+        // Serialize the app state
+        let state_bytes = serde_json::to_vec(&app_state).map_err(|e| e.to_string())?;
 
         // Return state unchanged
         Ok((Some(state_bytes),))
@@ -282,6 +309,11 @@ impl MessageServerClient for Actor {
         log("mcp-poc: Received channel message");
         Ok((state,))
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Request {
+    method: String,
 }
 
 bindings::export!(Actor with_types_in bindings);
