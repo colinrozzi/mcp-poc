@@ -381,27 +381,6 @@ impl MessageServerClient for Actor {
 
         log(&format!("Request string: {}", request_str));
 
-        // Check if this is a process message (handle-stdout)
-        if request_str.starts_with("[") && request_str.contains("handle-stdout") {
-            log("Received process stdout data");
-            // This is process stdout data, we should handle it specially
-            return handle_process_stdout(state, request_str);
-        }
-
-        // Another approach: if data starts with '[' character (91 in ASCII)
-        if !data.is_empty() && data[0] == 91 {
-            log("Detected array-like message format");
-            // Try to decode manually
-            let message_str = format!("{:?}", data);
-            log(&format!("Message as string: {}", message_str));
-
-            // This is likely a process message
-            if message_str.contains("handle-stdout") {
-                log("Detected stdout handler message");
-                return handle_process_stdout(state, message_str);
-            }
-        }
-
         // Parse the current state
         let mut app_state: AppState = match state {
             Some(state_bytes) if !state_bytes.is_empty() => serde_json::from_slice(&state_bytes)
@@ -409,52 +388,7 @@ impl MessageServerClient for Actor {
             _ => AppState::default(),
         };
 
-        // Check for timed out requests
-        if let Err(e) = app_state.check_timeouts() {
-            log(&format!("Error checking timeouts: {}", e));
-        }
-
-        // Try to parse as a standard request first
-        if let Ok(request) = serde_json::from_slice::<Request>(&data) {
-            match request.method.as_str() {
-                "initialize" => {
-                    log("Received initialize request");
-
-                    // Include proper initialization parameters with protocol version
-                    let init_params = json!({
-                        "protocolVersion": "2024-11-05",
-                        "capabilities": {
-                            "tools": {
-                                "supportsFileOperations": true
-                            }
-                        },
-                        "clientInfo": {
-                            "name": "mcp-poc",
-                            "version": "0.1.0"
-                        }
-                    });
-
-                    log("Sending initialize request to MCP server with parameters");
-                    app_state.send_message("initialize", Some(init_params))?;
-                }
-                "list_allowed_dirs" => {
-                    log("Sending list_allowed_dirs request");
-                    // Call the FS MCP server's list_allowed_dirs tool
-                    app_state.send_message(
-                        "tools/invoke",
-                        Some(json!({
-                            "name": "list_allowed_dirs",
-                            "parameters": {}
-                        })),
-                    )?;
-                }
-                _ => {
-                    log(&format!("Unknown method: {}", request.method));
-                }
-            }
-        }
-        // Try to parse as a tools/list request
-        else if let Ok(request) = serde_json::from_slice::<ToolsListRequest>(&data) {
+        if let Ok(request) = serde_json::from_slice::<ToolsListRequest>(&data) {
             log("Received tools_list request");
 
             // Check if server is initialized
