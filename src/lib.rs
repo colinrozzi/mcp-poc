@@ -4,10 +4,8 @@ use crate::bindings::exports::ntwk::theater::actor::Guest;
 use crate::bindings::exports::ntwk::theater::message_server_client::Guest as MessageServerClient;
 use crate::bindings::exports::ntwk::theater::process_handlers::Guest as ProcessHandlers;
 use crate::bindings::ntwk::theater::message_server_host::respond_to_request;
-use crate::bindings::ntwk::theater::message_server_host::send;
 use crate::bindings::ntwk::theater::process::{os_spawn, os_write_stdin, OutputMode};
 use crate::bindings::ntwk::theater::runtime::log;
-use crate::bindings::ntwk::theater::timing::now;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -53,6 +51,8 @@ struct InitState {
     server_path: String,
     args: Vec<String>,
 }
+
+const INITIALIZE_REQUEST_ID: &str = "initialize";
 
 #[derive(Serialize, Deserialize, Debug)]
 struct AppState {
@@ -165,7 +165,7 @@ impl Guest for Actor {
         });
 
         log("Sending initialize request to MCP server with parameters");
-        updated_state.send_message("initialize", "initialize", Some(init_params))?;
+        updated_state.send_message(INITIALIZE_REQUEST_ID, "initialize", Some(init_params))?;
 
         // Serialize the app state
         let state_bytes = serde_json::to_vec(&updated_state).map_err(|e| e.to_string())?;
@@ -215,6 +215,7 @@ impl ProcessHandlers for Actor {
         params: (u64, Vec<u8>),
     ) -> Result<(Option<Vec<u8>>,), String> {
         let (pid, data) = params;
+        log(&format!("Process {} stdout: {:?}", pid, data));
 
         // Check if state is empty or none
         if state.as_ref().map_or(true, |s| s.is_empty()) {
@@ -265,8 +266,13 @@ impl ProcessHandlers for Actor {
 impl MessageServerClient for Actor {
     fn handle_send(
         state: Option<Vec<u8>>,
-        _params: (Vec<u8>,),
+        params: (Vec<u8>,),
     ) -> Result<(Option<Vec<u8>>,), String> {
+        log("Handling send message");
+        log(&format!("Send message: {:?}", params));
+        let (message,) = params;
+        let msg_str = String::from_utf8_lossy(&message);
+        log(&format!("Send message content: {}", msg_str));
         // Return updated state
         Ok((state,))
     }
@@ -414,7 +420,7 @@ fn handle_process_stdout(
         Ok(response) => {
             log(&format!("Parsed MCP response: {:?}", response));
 
-            if response.id == "initialization" {
+            if response.id == INITIALIZE_REQUEST_ID {
                 log("Received initialization response");
                 if response.error.is_none() {
                     log("Server initialization successful");
