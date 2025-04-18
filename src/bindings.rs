@@ -1567,6 +1567,285 @@ pub mod ntwk {
                     result7
                 }
             }
+            #[allow(unused_unsafe, clippy::all)]
+            /// # List outstanding requests
+            ///
+            /// Retrieves a list of all pending request IDs that haven't been responded to yet.
+            ///
+            /// ## Returns
+            ///
+            /// * `list<string>` - List of outstanding request IDs
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::message_server_host;
+            ///
+            /// // Get all pending requests
+            /// let pending_requests = message_server_host::list_outstanding_requests();
+            /// for request_id in pending_requests {
+            ///     println!("Pending request: {}", request_id);
+            /// }
+            /// ```
+            ///
+            /// ## Implementation Notes
+            ///
+            /// This function is useful for actors that need to track and manage asynchronous
+            /// request processing. It allows actors to check for pending requests and decide
+            /// which ones to process next.
+            pub fn list_outstanding_requests() -> _rt::Vec<_rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 2 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 2
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    unsafe extern "C" {
+                        #[link_name = "list-outstanding-requests"]
+                        fn wit_import1(_: *mut u8);
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import1(_: *mut u8) {
+                        unreachable!()
+                    }
+                    unsafe { wit_import1(ptr0) };
+                    let l2 = *ptr0.add(0).cast::<*mut u8>();
+                    let l3 = *ptr0
+                        .add(::core::mem::size_of::<*const u8>())
+                        .cast::<usize>();
+                    let base7 = l2;
+                    let len7 = l3;
+                    let mut result7 = _rt::Vec::with_capacity(len7);
+                    for i in 0..len7 {
+                        let base = base7
+                            .add(i * (2 * ::core::mem::size_of::<*const u8>()));
+                        let e7 = {
+                            let l4 = *base.add(0).cast::<*mut u8>();
+                            let l5 = *base
+                                .add(::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            let len6 = l5;
+                            let bytes6 = _rt::Vec::from_raw_parts(l4.cast(), len6, len6);
+                            _rt::string_lift(bytes6)
+                        };
+                        result7.push(e7);
+                    }
+                    _rt::cabi_dealloc(
+                        base7,
+                        len7 * (2 * ::core::mem::size_of::<*const u8>()),
+                        ::core::mem::size_of::<*const u8>(),
+                    );
+                    let result8 = result7;
+                    result8
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Respond to a specific request
+            ///
+            /// Sends a response to a previously received request identified by its ID.
+            ///
+            /// ## Parameters
+            ///
+            /// * `request-id` - ID of the request to respond to
+            /// * `response` - JSON response payload to send
+            ///
+            /// ## Returns
+            ///
+            /// * `Ok(_)` - Response was successfully sent
+            /// * `Err(string)` - Error message if response fails
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::message_server_host;
+            /// use serde_json::json;
+            ///
+            /// // Respond to a specific request
+            /// let response = json!({
+            ///     "status": "success",
+            ///     "data": {
+            ///         "result": 42
+            ///     }
+            /// });
+            /// message_server_host::respond_to_request("req-123", response)?;
+            /// ```
+            ///
+            /// ## Implementation Notes
+            ///
+            /// This function allows actors to implement asynchronous request handling patterns,
+            /// where requests are received, processed in the background, and responded to later.
+            /// If the request ID is not found, an error is returned.
+            pub fn respond_to_request(
+                request_id: &str,
+                response: &[u8],
+            ) -> Result<(), _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let vec0 = request_id;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let vec1 = response;
+                    let ptr1 = vec1.as_ptr().cast::<u8>();
+                    let len1 = vec1.len();
+                    let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    unsafe extern "C" {
+                        #[link_name = "respond-to-request"]
+                        fn wit_import3(
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                        );
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import3(
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                    ) {
+                        unreachable!()
+                    }
+                    unsafe {
+                        wit_import3(ptr0.cast_mut(), len0, ptr1.cast_mut(), len1, ptr2)
+                    };
+                    let l4 = i32::from(*ptr2.add(0).cast::<u8>());
+                    let result8 = match l4 {
+                        0 => {
+                            let e = ();
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l5 = *ptr2
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l6 = *ptr2
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len7 = l6;
+                                let bytes7 = _rt::Vec::from_raw_parts(
+                                    l5.cast(),
+                                    len7,
+                                    len7,
+                                );
+                                _rt::string_lift(bytes7)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result8
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// # Cancel a pending request
+            ///
+            /// Explicitly cancels a pending request without sending a response.
+            ///
+            /// ## Parameters
+            ///
+            /// * `request-id` - ID of the request to cancel
+            ///
+            /// ## Returns
+            ///
+            /// * `Ok(_)` - Request was successfully canceled
+            /// * `Err(string)` - Error message if cancellation fails
+            ///
+            /// ## Example
+            ///
+            /// ```rust
+            /// use ntwk::theater::message_server_host;
+            ///
+            /// // Cancel a request that can't be fulfilled
+            /// message_server_host::cancel_request("req-123")?;
+            /// ```
+            ///
+            /// ## Implementation Notes
+            ///
+            /// Canceling a request causes the requester to receive an error indicating that
+            /// the request was canceled. This is useful for cleanup operations and handling
+            /// error cases where a proper response cannot be generated.
+            pub fn cancel_request(request_id: &str) -> Result<(), _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let vec0 = request_id;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    unsafe extern "C" {
+                        #[link_name = "cancel-request"]
+                        fn wit_import2(_: *mut u8, _: usize, _: *mut u8);
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import2(_: *mut u8, _: usize, _: *mut u8) {
+                        unreachable!()
+                    }
+                    unsafe { wit_import2(ptr0.cast_mut(), len0, ptr1) };
+                    let l3 = i32::from(*ptr1.add(0).cast::<u8>());
+                    let result7 = match l3 {
+                        0 => {
+                            let e = ();
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l4 = *ptr1
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l5 = *ptr1
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len6 = l5;
+                                let bytes6 = _rt::Vec::from_raw_parts(
+                                    l4.cast(),
+                                    len6,
+                                    len6,
+                                );
+                                _rt::string_lift(bytes6)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result7
+                }
+            }
         }
         /// # Timing Interface
         ///
@@ -2256,10 +2535,14 @@ pub mod exports {
                     arg2: usize,
                     arg3: *mut u8,
                     arg4: usize,
+                    arg5: *mut u8,
+                    arg6: usize,
                 ) -> *mut u8 {
                     #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
                     let len1 = arg4;
-                    let result2 = T::handle_request(
+                    let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
+                    let len2 = arg6;
+                    let result3 = T::handle_request(
                         match arg0 {
                             0 => None,
                             1 => {
@@ -2271,62 +2554,77 @@ pub mod exports {
                             }
                             _ => _rt::invalid_enum_discriminant(),
                         },
-                        (_rt::Vec::from_raw_parts(arg3.cast(), len1, len1),),
+                        (
+                            _rt::string_lift(bytes1),
+                            _rt::Vec::from_raw_parts(arg5.cast(), len2, len2),
+                        ),
                     );
-                    let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
-                    match result2 {
+                    let ptr4 = (&raw mut _RET_AREA.0).cast::<u8>();
+                    match result3 {
                         Ok(e) => {
-                            *ptr3.add(0).cast::<u8>() = (0i32) as u8;
-                            let (t4_0, t4_1) = e;
-                            match t4_0 {
+                            *ptr4.add(0).cast::<u8>() = (0i32) as u8;
+                            let (t5_0, t5_1) = e;
+                            match t5_0 {
                                 Some(e) => {
-                                    *ptr3
+                                    *ptr4
                                         .add(::core::mem::size_of::<*const u8>())
                                         .cast::<u8>() = (1i32) as u8;
-                                    let vec5 = (e).into_boxed_slice();
-                                    let ptr5 = vec5.as_ptr().cast::<u8>();
-                                    let len5 = vec5.len();
-                                    ::core::mem::forget(vec5);
-                                    *ptr3
+                                    let vec6 = (e).into_boxed_slice();
+                                    let ptr6 = vec6.as_ptr().cast::<u8>();
+                                    let len6 = vec6.len();
+                                    ::core::mem::forget(vec6);
+                                    *ptr4
                                         .add(3 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<usize>() = len5;
-                                    *ptr3
+                                        .cast::<usize>() = len6;
+                                    *ptr4
                                         .add(2 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<*mut u8>() = ptr5.cast_mut();
+                                        .cast::<*mut u8>() = ptr6.cast_mut();
                                 }
                                 None => {
-                                    *ptr3
+                                    *ptr4
                                         .add(::core::mem::size_of::<*const u8>())
                                         .cast::<u8>() = (0i32) as u8;
                                 }
                             };
-                            let (t6_0,) = t4_1;
-                            let vec7 = (t6_0).into_boxed_slice();
-                            let ptr7 = vec7.as_ptr().cast::<u8>();
-                            let len7 = vec7.len();
-                            ::core::mem::forget(vec7);
-                            *ptr3
-                                .add(5 * ::core::mem::size_of::<*const u8>())
-                                .cast::<usize>() = len7;
-                            *ptr3
-                                .add(4 * ::core::mem::size_of::<*const u8>())
-                                .cast::<*mut u8>() = ptr7.cast_mut();
+                            let (t7_0,) = t5_1;
+                            match t7_0 {
+                                Some(e) => {
+                                    *ptr4
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (1i32) as u8;
+                                    let vec8 = (e).into_boxed_slice();
+                                    let ptr8 = vec8.as_ptr().cast::<u8>();
+                                    let len8 = vec8.len();
+                                    ::core::mem::forget(vec8);
+                                    *ptr4
+                                        .add(6 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>() = len8;
+                                    *ptr4
+                                        .add(5 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>() = ptr8.cast_mut();
+                                }
+                                None => {
+                                    *ptr4
+                                        .add(4 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (0i32) as u8;
+                                }
+                            };
                         }
                         Err(e) => {
-                            *ptr3.add(0).cast::<u8>() = (1i32) as u8;
-                            let vec8 = (e.into_bytes()).into_boxed_slice();
-                            let ptr8 = vec8.as_ptr().cast::<u8>();
-                            let len8 = vec8.len();
-                            ::core::mem::forget(vec8);
-                            *ptr3
+                            *ptr4.add(0).cast::<u8>() = (1i32) as u8;
+                            let vec9 = (e.into_bytes()).into_boxed_slice();
+                            let ptr9 = vec9.as_ptr().cast::<u8>();
+                            let len9 = vec9.len();
+                            ::core::mem::forget(vec9);
+                            *ptr4
                                 .add(2 * ::core::mem::size_of::<*const u8>())
-                                .cast::<usize>() = len8;
-                            *ptr3
+                                .cast::<usize>() = len9;
+                            *ptr4
                                 .add(::core::mem::size_of::<*const u8>())
-                                .cast::<*mut u8>() = ptr8.cast_mut();
+                                .cast::<*mut u8>() = ptr9.cast_mut();
                         }
                     };
-                    ptr3
+                    ptr4
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
@@ -2351,24 +2649,34 @@ pub mod exports {
                                     _rt::cabi_dealloc(base4, len4 * 1, 1);
                                 }
                             }
-                            let l5 = *arg0
-                                .add(4 * ::core::mem::size_of::<*const u8>())
-                                .cast::<*mut u8>();
-                            let l6 = *arg0
-                                .add(5 * ::core::mem::size_of::<*const u8>())
-                                .cast::<usize>();
-                            let base7 = l5;
-                            let len7 = l6;
-                            _rt::cabi_dealloc(base7, len7 * 1, 1);
+                            let l5 = i32::from(
+                                *arg0
+                                    .add(4 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<u8>(),
+                            );
+                            match l5 {
+                                0 => {}
+                                _ => {
+                                    let l6 = *arg0
+                                        .add(5 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>();
+                                    let l7 = *arg0
+                                        .add(6 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let base8 = l6;
+                                    let len8 = l7;
+                                    _rt::cabi_dealloc(base8, len8 * 1, 1);
+                                }
+                            }
                         }
                         _ => {
-                            let l8 = *arg0
+                            let l9 = *arg0
                                 .add(::core::mem::size_of::<*const u8>())
                                 .cast::<*mut u8>();
-                            let l9 = *arg0
+                            let l10 = *arg0
                                 .add(2 * ::core::mem::size_of::<*const u8>())
                                 .cast::<usize>();
-                            _rt::cabi_dealloc(l8, l9, 1);
+                            _rt::cabi_dealloc(l9, l10, 1);
                         }
                     }
                 }
@@ -2790,33 +3098,34 @@ pub mod exports {
                     ///
                     /// * `state` - The current actor state or None if not initialized
                     /// * `params` - Tuple containing:
+                    ///   * `string` - The request ID
                     ///   * `json` - The request payload
                     ///
                     /// ## Returns
                     ///
-                    /// * `Ok((option<json>, (json,)))` - Tuple containing:
-                    ///   * Updated actor state (or None to retain current state)
-                    ///   * Response message to send back
+                    /// * `Ok((option<json>, (option<json>,)))` - Tuple containing:
+                    ///   * Updated actor state (or None)
+                    ///   * Response message to send back (or None to send a response yet)
                     /// * `Err(string)` - Error message if request handling fails
                     ///
                     /// ## Example
                     ///
                     /// ```rust
-                    /// fn handle_request(state: Option<Value>, params: (Value,))
-                    ///         -> Result<(Option<Value>, (Value,)), String> {
-                    ///     let (request,) = params;
+                    /// fn handle_request(state: Option<Vec<u8>>, params: (String, Vec<u8>))
+                    ///         -> Result<(Option<Vec<u8>>, (Option<Vec<u8>>,)), String> {
+                    ///     let (request_id, request) = params;
                     ///
                     ///     // Process the request...
                     ///     let response = json!({"status": "success", "data": "result"});
                     ///
                     ///     // Return updated state and response
-                    ///     Ok((Some(updated_state), (response,)))
+                    ///     Ok((Some(updated_state), (Some(response),)))
                     /// }
                     /// ```
                     fn handle_request(
                         state: Option<Json>,
-                        params: (Json,),
-                    ) -> Result<(Option<Json>, (Json,)), _rt::String>;
+                        params: (_rt::String, Json),
+                    ) -> Result<(Option<Json>, (Option<Json>,)), _rt::String>;
                     /// # Handle channel open request
                     ///
                     /// Called when another actor requests to open a communication channel.
@@ -2948,9 +3257,10 @@ pub mod exports {
                         (arg0) } } #[unsafe (export_name =
                         "ntwk:theater/message-server-client#handle-request")] unsafe
                         extern "C" fn export_handle_request(arg0 : i32, arg1 : * mut u8,
-                        arg2 : usize, arg3 : * mut u8, arg4 : usize,) -> * mut u8 {
-                        unsafe { $($path_to_types)*:: _export_handle_request_cabi::<$ty >
-                        (arg0, arg1, arg2, arg3, arg4) } } #[unsafe (export_name =
+                        arg2 : usize, arg3 : * mut u8, arg4 : usize, arg5 : * mut u8,
+                        arg6 : usize,) -> * mut u8 { unsafe { $($path_to_types)*::
+                        _export_handle_request_cabi::<$ty > (arg0, arg1, arg2, arg3,
+                        arg4, arg5, arg6) } } #[unsafe (export_name =
                         "cabi_post_ntwk:theater/message-server-client#handle-request")]
                         unsafe extern "C" fn _post_return_handle_request(arg0 : * mut
                         u8,) { unsafe { $($path_to_types)*::
@@ -3562,8 +3872,8 @@ pub(crate) use __export_hello_world_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2077] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x9b\x0f\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2206] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x9c\x10\x01A\x02\x01\
 A\x17\x01B\x14\x01p}\x04\0\x04json\x03\0\0\x01p}\x01k\x02\x04\0\x05state\x03\0\x03\
 \x01s\x04\0\x08actor-id\x03\0\x05\x01s\x04\0\x0achannel-id\x03\0\x07\x01k\x01\x01\
 r\x02\x08accepted\x7f\x07message\x09\x04\0\x0echannel-accept\x03\0\x0a\x01kw\x01\
@@ -3584,36 +3894,39 @@ ew\x04\0\x0eprocess-status\x03\0\x0c\x01j\x01w\x01s\x01@\x01\x06config\x0a\0\x0e
 \x04\0\x0eos-write-stdin\x01\x12\x01j\x01\x0d\x01s\x01@\x01\x03pidw\0\x13\x04\0\x09\
 os-status\x01\x14\x01j\0\x01s\x01@\x02\x03pidw\x06signaly\0\x15\x04\0\x09os-sign\
 al\x01\x16\x01@\x01\x03pidw\0\x15\x04\0\x07os-kill\x01\x17\x03\0\x14ntwk:theater\
-/process\x05\x05\x02\x03\0\0\x0achannel-id\x01B\x13\x02\x03\x02\x01\x01\x04\0\x04\
+/process\x05\x05\x02\x03\0\0\x0achannel-id\x01B\x1a\x02\x03\x02\x01\x01\x04\0\x04\
 json\x03\0\0\x02\x03\x02\x01\x03\x04\0\x08actor-id\x03\0\x02\x02\x03\x02\x01\x06\
 \x04\0\x0achannel-id\x03\0\x04\x01j\0\x01s\x01@\x02\x08actor-id\x03\x03msg\x01\0\
 \x06\x04\0\x04send\x01\x07\x01j\x01\x01\x01s\x01@\x02\x08actor-id\x03\x03msg\x01\
 \0\x08\x04\0\x07request\x01\x09\x01j\x01\x05\x01s\x01@\x02\x08actor-id\x03\x0bin\
 itial-msg\x01\0\x0a\x04\0\x0copen-channel\x01\x0b\x01@\x02\x0achannel-id\x05\x03\
 msg\x01\0\x06\x04\0\x0fsend-on-channel\x01\x0c\x01@\x01\x0achannel-id\x05\0\x06\x04\
-\0\x0dclose-channel\x01\x0d\x03\0\x20ntwk:theater/message-server-host\x05\x07\x01\
-B\x07\x01@\0\0w\x04\0\x03now\x01\0\x01j\0\x01s\x01@\x01\x08durationw\0\x01\x04\0\
-\x05sleep\x01\x02\x01@\x01\x09timestampw\0\x01\x04\0\x08deadline\x01\x03\x03\0\x13\
-ntwk:theater/timing\x05\x08\x02\x03\0\0\x05state\x01B\x07\x02\x03\x02\x01\x09\x04\
-\0\x05state\x03\0\0\x01o\x01s\x01o\x01\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\
-\x06params\x02\0\x04\x04\0\x04init\x01\x05\x04\0\x12ntwk:theater/actor\x05\x0a\x02\
-\x03\0\0\x05event\x02\x03\0\0\x0echannel-accept\x01B\x1d\x02\x03\x02\x01\x01\x04\
-\0\x04json\x03\0\0\x02\x03\x02\x01\x0b\x04\0\x05event\x03\0\x02\x02\x03\x02\x01\x06\
-\x04\0\x0achannel-id\x03\0\x04\x02\x03\x02\x01\x0c\x04\0\x0echannel-accept\x03\0\
-\x06\x01k\x01\x01o\x01\x01\x01o\x01\x08\x01j\x01\x0a\x01s\x01@\x02\x05state\x08\x06\
-params\x09\0\x0b\x04\0\x0bhandle-send\x01\x0c\x01o\x02\x08\x09\x01j\x01\x0d\x01s\
-\x01@\x02\x05state\x08\x06params\x09\0\x0e\x04\0\x0ehandle-request\x01\x0f\x01o\x01\
-\x07\x01o\x02\x08\x10\x01j\x01\x11\x01s\x01@\x02\x05state\x08\x06params\x09\0\x12\
-\x04\0\x13handle-channel-open\x01\x13\x01o\x02\x05\x01\x01@\x02\x05state\x08\x06\
-params\x14\0\x0b\x04\0\x16handle-channel-message\x01\x15\x01o\x01\x05\x01@\x02\x05\
-state\x08\x06params\x16\0\x0b\x04\0\x14handle-channel-close\x01\x17\x04\0\"ntwk:\
-theater/message-server-client\x05\x0d\x01B\x0d\x02\x03\x02\x01\x01\x04\0\x04json\
-\x03\0\0\x01k\x01\x01p}\x01o\x02w\x03\x01o\x01\x02\x01j\x01\x05\x01s\x01@\x02\x05\
-state\x02\x06params\x04\0\x06\x04\0\x0dhandle-stdout\x01\x07\x04\0\x0dhandle-std\
-err\x01\x07\x01o\x02wz\x01@\x02\x05state\x02\x06params\x08\0\x06\x04\0\x0bhandle\
--exit\x01\x09\x04\0\x1dntwk:theater/process-handlers\x05\x0e\x04\0\x18ntwk:theat\
-er/hello-world\x04\0\x0b\x11\x01\0\x0bhello-world\x03\0\0\0G\x09producers\x01\x0c\
-processed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
+\0\x0dclose-channel\x01\x0d\x01ps\x01@\0\0\x0e\x04\0\x19list-outstanding-request\
+s\x01\x0f\x01@\x02\x0arequest-ids\x08response\x01\0\x06\x04\0\x12respond-to-requ\
+est\x01\x10\x01@\x01\x0arequest-ids\0\x06\x04\0\x0ecancel-request\x01\x11\x03\0\x20\
+ntwk:theater/message-server-host\x05\x07\x01B\x07\x01@\0\0w\x04\0\x03now\x01\0\x01\
+j\0\x01s\x01@\x01\x08durationw\0\x01\x04\0\x05sleep\x01\x02\x01@\x01\x09timestam\
+pw\0\x01\x04\0\x08deadline\x01\x03\x03\0\x13ntwk:theater/timing\x05\x08\x02\x03\0\
+\0\x05state\x01B\x07\x02\x03\x02\x01\x09\x04\0\x05state\x03\0\0\x01o\x01s\x01o\x01\
+\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\0\x04init\x01\
+\x05\x04\0\x12ntwk:theater/actor\x05\x0a\x02\x03\0\0\x05event\x02\x03\0\0\x0echa\
+nnel-accept\x01B\x1e\x02\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x02\x03\x02\x01\x0b\
+\x04\0\x05event\x03\0\x02\x02\x03\x02\x01\x06\x04\0\x0achannel-id\x03\0\x04\x02\x03\
+\x02\x01\x0c\x04\0\x0echannel-accept\x03\0\x06\x01k\x01\x01o\x01\x01\x01o\x01\x08\
+\x01j\x01\x0a\x01s\x01@\x02\x05state\x08\x06params\x09\0\x0b\x04\0\x0bhandle-sen\
+d\x01\x0c\x01o\x02s\x01\x01o\x02\x08\x0a\x01j\x01\x0e\x01s\x01@\x02\x05state\x08\
+\x06params\x0d\0\x0f\x04\0\x0ehandle-request\x01\x10\x01o\x01\x07\x01o\x02\x08\x11\
+\x01j\x01\x12\x01s\x01@\x02\x05state\x08\x06params\x09\0\x13\x04\0\x13handle-cha\
+nnel-open\x01\x14\x01o\x02\x05\x01\x01@\x02\x05state\x08\x06params\x15\0\x0b\x04\
+\0\x16handle-channel-message\x01\x16\x01o\x01\x05\x01@\x02\x05state\x08\x06param\
+s\x17\0\x0b\x04\0\x14handle-channel-close\x01\x18\x04\0\"ntwk:theater/message-se\
+rver-client\x05\x0d\x01B\x0d\x02\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x01k\x01\x01\
+p}\x01o\x02w\x03\x01o\x01\x02\x01j\x01\x05\x01s\x01@\x02\x05state\x02\x06params\x04\
+\0\x06\x04\0\x0dhandle-stdout\x01\x07\x04\0\x0dhandle-stderr\x01\x07\x01o\x02wz\x01\
+@\x02\x05state\x02\x06params\x08\0\x06\x04\0\x0bhandle-exit\x01\x09\x04\0\x1dntw\
+k:theater/process-handlers\x05\x0e\x04\0\x18ntwk:theater/hello-world\x04\0\x0b\x11\
+\x01\0\x0bhello-world\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-com\
+ponent\x070.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {
