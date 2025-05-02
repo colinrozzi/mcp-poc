@@ -48,7 +48,7 @@ struct McpError {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct InitState {
-    server_path: String,
+    command: String,
     args: Vec<String>,
 }
 
@@ -120,17 +120,18 @@ impl Guest for Actor {
         let init_state: InitState = serde_json::from_slice(&init_state_bytes)
             .map_err(|e| format!("Failed to deserialize init state: {}", e))?;
         log(&format!(
-            "Parsed init state: server_path: {}, args: {:?}",
-            init_state.server_path, init_state.args
+            "Parsed init state: command: {}, args: {:?}",
+            init_state.command, init_state.args
         ));
 
         // Start the fs-mcp-server process
         let config = bindings::ntwk::theater::process::ProcessConfig {
-            program: init_state.server_path,
+            program: init_state.command,
             args: init_state.args,
             env: vec![],
             cwd: None,
-            buffer_size: 4096, // Larger buffer for JSON messages
+            // an absurdly large buffer size to avoid truncation
+            buffer_size: 1024 * 1024 * 1024,
             chunk_size: None,
             stdout_mode: OutputMode::Raw,
             stderr_mode: OutputMode::Raw,
@@ -287,7 +288,7 @@ impl MessageServerClient for Actor {
         log(&format!("Request data: {:?}", request));
 
         // Parse the current state
-        let mut app_state: AppState = match state {
+        let app_state: AppState = match state {
             Some(state_bytes) if !state_bytes.is_empty() => serde_json::from_slice(&state_bytes)
                 .map_err(|e| format!("Failed to deserialize state: {}", e))?,
             _ => AppState::default(),
