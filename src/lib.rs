@@ -3,7 +3,7 @@ mod bindings;
 use crate::bindings::exports::ntwk::theater::actor::Guest;
 use crate::bindings::exports::ntwk::theater::message_server_client::Guest as MessageServerClient;
 use crate::bindings::exports::ntwk::theater::process_handlers::Guest as ProcessHandlers;
-use crate::bindings::ntwk::theater::message_server_host::respond_to_request;
+use crate::bindings::ntwk::theater::message_server_host::{respond_to_request, send};
 use crate::bindings::ntwk::theater::process::{os_spawn, os_write_stdin, OutputMode};
 use crate::bindings::ntwk::theater::runtime::log;
 
@@ -56,26 +56,19 @@ const INITIALIZE_REQUEST_ID: &str = "initialize";
 
 #[derive(Serialize, Deserialize, Debug)]
 struct AppState {
+    id: String,
+
     // Process management
     server_pid: Option<u64>,
     server_initialized: bool,
+
+    unsent_requests: Vec<McpRequest>,
 
     // Request tracking
     pending_requests: HashMap<String, McpRequest>,
 
     // Server capabilities
     server_capabilities: Option<Value>,
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        Self {
-            server_pid: None,
-            server_initialized: false,
-            pending_requests: HashMap::new(),
-            server_capabilities: None,
-        }
-    }
 }
 
 impl AppState {
@@ -100,6 +93,29 @@ impl AppState {
             .expect("Failed to write to stdin");
         Ok(())
     }
+
+    fn send_next_unsent(&mut self) -> Result<(), String> {
+        if let Some(request) = self.unsent_requests.pop() {
+            log(&format!("Sending next unsent request: {:?}", request));
+            let request_json = serde_json::to_string(&request).map_err(|e| e.to_string())? + "\n";
+            os_write_stdin(self.server_pid.unwrap(), request_json.as_bytes())
+                .map_err(|e| format!("Failed to write to stdin: {}", e))?;
+
+            // If there are more unsent requests, send ourselves a message to send the next one
+            if !self.unsent_requests.is_empty() {
+                log("Scheduling next unsent request");
+                let send_request = SendUnsentRequests {};
+                let send_request_json = serde_json::to_string(&send_request)
+                    .map_err(|e| format!("Failed to serialize send request: {}", e))?;
+                send(&self.id, send_request_json.as_bytes())
+                    .map_err(|e| format!("Failed to send message: {}", e))?;
+            } else {
+                log("No more unsent requests");
+            }
+        }
+
+        Ok(())
+    }
 }
 
 struct Actor;
@@ -110,7 +126,15 @@ impl Guest for Actor {
         let (self_id,) = params;
         log(&format!("self id: {}", self_id));
 
-        let app_state = AppState::default();
+        let app_state = AppState {
+            id: self_id,
+            server_pid: None,
+            server_initialized: false,
+            unsent_requests: vec![],
+            pending_requests: HashMap::new(),
+            server_capabilities: None,
+        };
+
         log("Created default app state");
 
         log("Parsing init state");
@@ -185,10 +209,7 @@ impl ProcessHandlers for Actor {
         log(&format!("Process {} exited with code {}", pid, exit_code));
 
         // Parse the current state
-        let state_bytes = state.unwrap_or_default();
-        if state_bytes.is_empty() {
-            return Ok((None,));
-        }
+        let state_bytes = state.unwrap();
 
         let app_state: AppState = serde_json::from_slice(&state_bytes)
             .map_err(|e| format!("Failed to deserialize state: {}", e))?;
@@ -218,11 +239,6 @@ impl ProcessHandlers for Actor {
         let (pid, data) = params;
         log(&format!("Process {} stdout: {:?}", pid, data));
 
-        // Check if state is empty or none
-        if state.as_ref().map_or(true, |s| s.is_empty()) {
-            return Ok((None,));
-        }
-
         // Try to parse the data as UTF-8
         if let Ok(stdout_data) = String::from_utf8(data.clone()) {
             log(&format!("Received stdout: [{}] {} ", pid, stdout_data));
@@ -244,12 +260,6 @@ impl ProcessHandlers for Actor {
     ) -> Result<(Option<Vec<u8>>,), String> {
         let (pid, data) = params;
 
-        // Parse the current state
-        let state_bytes = state.unwrap_or_default();
-        if state_bytes.is_empty() {
-            return Ok((None,));
-        }
-
         // Only log stderr output
         if let Ok(stderr_data) = String::from_utf8(data.clone()) {
             log(&format!("Process {} stderr: {}", pid, stderr_data));
@@ -260,9 +270,12 @@ impl ProcessHandlers for Actor {
             ));
         }
 
-        Ok((Some(state_bytes),))
+        Ok((state,))
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+struct SendUnsentRequests;
 
 impl MessageServerClient for Actor {
     fn handle_send(
@@ -270,12 +283,32 @@ impl MessageServerClient for Actor {
         params: (Vec<u8>,),
     ) -> Result<(Option<Vec<u8>>,), String> {
         log("Handling send message");
-        log(&format!("Send message: {:?}", params));
-        let (message,) = params;
-        let msg_str = String::from_utf8_lossy(&message);
-        log(&format!("Send message content: {}", msg_str));
-        // Return updated state
-        Ok((state,))
+
+        let mut app_state: AppState = match state {
+            Some(state_bytes) if !state_bytes.is_empty() => serde_json::from_slice(&state_bytes)
+                .map_err(|e| format!("Failed to deserialize state: {}", e))?,
+            _ => return Err("Invalid state".to_string()),
+        };
+
+        // Parse the request
+        match serde_json::from_slice::<SendUnsentRequests>(&params.0) {
+            Ok(_) => {
+                log("Received send unsent requests message");
+                // Send the next unsent request
+                let result = app_state.send_next_unsent();
+                if let Err(e) = result {
+                    log(&format!("Failed to send next unsent request: {}", e));
+                    return Err("Failed to send next unsent request".to_string());
+                }
+            }
+            Err(e) => {
+                log(&format!("Failed to parse request: {}", e));
+                return Err("Unknown request format".to_string());
+            }
+        };
+
+        let state_bytes = serde_json::to_vec(&app_state).map_err(|e| e.to_string())?;
+        Ok((Some(state_bytes),))
     }
 
     fn handle_request(
@@ -288,10 +321,10 @@ impl MessageServerClient for Actor {
         log(&format!("Request data: {:?}", request));
 
         // Parse the current state
-        let app_state: AppState = match state {
+        let mut app_state: AppState = match state {
             Some(state_bytes) if !state_bytes.is_empty() => serde_json::from_slice(&state_bytes)
                 .map_err(|e| format!("Failed to deserialize state: {}", e))?,
-            _ => AppState::default(),
+            _ => return Err("Invalid state".to_string()),
         };
 
         // Parse the request
@@ -304,24 +337,17 @@ impl MessageServerClient for Actor {
         };
 
         // Process the request based on its type
-        match request {
+        let mcp_request = match request {
             McpActorRequest::ToolsList {} => {
                 log("Received tools_list request");
 
                 // Send tools/list request
-                let mcp_request = McpRequest {
+                McpRequest {
                     jsonrpc: "2.0".to_string(),
                     id: request_id,
                     method: "tools/list".to_string(),
                     params: None,
-                };
-
-                let request_json =
-                    serde_json::to_string(&mcp_request).map_err(|e| e.to_string())? + "\n";
-                log(&format!("Sending tools/list request: {}", request_json));
-
-                os_write_stdin(app_state.server_pid.unwrap(), request_json.as_bytes())
-                    .map_err(|e| format!("Failed to write to stdin: {}", e))?;
+                }
             }
 
             McpActorRequest::ToolsCall { name, args } => {
@@ -333,7 +359,7 @@ impl MessageServerClient for Actor {
                 }
 
                 // Send tools/call request
-                let mcp_request = McpRequest {
+                McpRequest {
                     jsonrpc: "2.0".to_string(),
                     id: request_id,
                     method: "tools/call".to_string(),
@@ -341,15 +367,19 @@ impl MessageServerClient for Actor {
                         "name": name,
                         "arguments": args
                     })),
-                };
-
-                let request_json =
-                    serde_json::to_string(&mcp_request).map_err(|e| e.to_string())? + "\n";
-                log(&format!("Sending tools/call request: {}", request_json));
-
-                os_write_stdin(app_state.server_pid.unwrap(), request_json.as_bytes())
-                    .map_err(|e| format!("Failed to write to stdin: {}", e))?;
+                }
             }
+        };
+
+        // Add the request to the unsent requests
+        app_state.unsent_requests.push(mcp_request);
+
+        // If the server is initialized, send the next unsent request
+        if app_state.server_initialized {
+            log("Server initialized, sending next unsent request");
+            app_state.send_next_unsent()?;
+        } else {
+            log("Server not initialized, deferring request");
         }
 
         // Serialize the app state
@@ -444,6 +474,12 @@ fn handle_process_stdout(
 
                     log("MCP connection established. Ready for commands.");
                     app_state.server_initialized = true;
+                    if app_state.unsent_requests.is_empty() {
+                        log("No unsent requests to send");
+                    } else {
+                        log("Sending next unsent request");
+                        app_state.send_next_unsent()?;
+                    }
                 } else if let Some(error) = &response.error {
                     log(&format!(
                         "Server initialization failed: {} (code: {})",
