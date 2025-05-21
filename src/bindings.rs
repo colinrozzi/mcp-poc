@@ -16,7 +16,6 @@ pub mod ntwk {
         /// The types interface provides common data structures and type aliases used
         /// throughout the Theater system. These types represent core concepts such as:
         ///
-        /// - Actor state
         /// - Message formats
         /// - Event chain structures
         /// - Identifiers
@@ -29,18 +28,7 @@ pub mod ntwk {
         /// These types are typically imported and used in actor implementations:
         ///
         /// ```rust
-        /// use ntwk::theater::types::{state, json, actor_id};
-        ///
-        /// // Using the state type for actor state
-        /// fn process_state(current_state: state) -> Result<state, String> {
-        ///     // Process the state
-        ///     Ok(current_state)
-        /// }
-        ///
-        /// // Using the json type for serialized data
-        /// fn create_message() -> json {
-        ///     serde_json::to_vec(&MyMessage { value: 42 }).unwrap()
-        /// }
+        /// use ntwk::theater::types::actor_id;
         ///
         /// // Using actor-id for referring to actors
         /// fn get_actor_info(id: actor_id) -> String {
@@ -60,18 +48,6 @@ pub mod ntwk {
             #[doc(hidden)]
             static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
             use super::super::super::_rt;
-            /// Generic message type as bytes that can be serialized/deserialized
-            ///
-            /// Represents JSON-encoded data as a byte array. This type is used for
-            /// passing structured data between components that may need to be serialized
-            /// and deserialized.
-            pub type Json = _rt::Vec<u8>;
-            /// Actor state represented as an optional byte array
-            ///
-            /// This type represents the current state of an actor. The state is:
-            /// - None when an actor is first initialized and has no state yet
-            /// - Some(bytes) containing serialized state data when the actor has state
-            pub type State = Option<_rt::Vec<u8>>;
             /// Unique identifier for an actor
             ///
             /// Actors are identified by string identifiers throughout the system. These
@@ -91,7 +67,7 @@ pub mod ntwk {
                 /// Whether the channel connection was accepted
                 pub accepted: bool,
                 /// Optional initial message to send on the channel
-                pub message: Option<Json>,
+                pub message: Option<_rt::Vec<u8>>,
             }
             impl ::core::fmt::Debug for ChannelAccept {
                 fn fmt(
@@ -115,7 +91,7 @@ pub mod ntwk {
                 /// Optional reference to parent event (previous in chain)
                 pub parent: Option<u64>,
                 /// Serialized event data
-                pub data: Json,
+                pub data: _rt::Vec<u8>,
             }
             impl ::core::fmt::Debug for Event {
                 fn fmt(
@@ -166,6 +142,76 @@ pub mod ntwk {
                     f: &mut ::core::fmt::Formatter<'_>,
                 ) -> ::core::fmt::Result {
                     f.debug_struct("Chain").field("events", &self.events).finish()
+                }
+            }
+            /// Actor error
+            #[repr(u8)]
+            #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
+            pub enum WitErrorType {
+                OperationTimeout,
+                ChannelClosed,
+                ShuttingDown,
+                FunctionNotFound,
+                TypeMismatch,
+                Internal,
+                SerializationError,
+                UpdateComponentError,
+                Paused,
+            }
+            impl ::core::fmt::Debug for WitErrorType {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    match self {
+                        WitErrorType::OperationTimeout => {
+                            f.debug_tuple("WitErrorType::OperationTimeout").finish()
+                        }
+                        WitErrorType::ChannelClosed => {
+                            f.debug_tuple("WitErrorType::ChannelClosed").finish()
+                        }
+                        WitErrorType::ShuttingDown => {
+                            f.debug_tuple("WitErrorType::ShuttingDown").finish()
+                        }
+                        WitErrorType::FunctionNotFound => {
+                            f.debug_tuple("WitErrorType::FunctionNotFound").finish()
+                        }
+                        WitErrorType::TypeMismatch => {
+                            f.debug_tuple("WitErrorType::TypeMismatch").finish()
+                        }
+                        WitErrorType::Internal => {
+                            f.debug_tuple("WitErrorType::Internal").finish()
+                        }
+                        WitErrorType::SerializationError => {
+                            f.debug_tuple("WitErrorType::SerializationError").finish()
+                        }
+                        WitErrorType::UpdateComponentError => {
+                            f.debug_tuple("WitErrorType::UpdateComponentError").finish()
+                        }
+                        WitErrorType::Paused => {
+                            f.debug_tuple("WitErrorType::Paused").finish()
+                        }
+                    }
+                }
+            }
+            impl WitErrorType {
+                #[doc(hidden)]
+                pub unsafe fn _lift(val: u8) -> WitErrorType {
+                    if !cfg!(debug_assertions) {
+                        return ::core::mem::transmute(val);
+                    }
+                    match val {
+                        0 => WitErrorType::OperationTimeout,
+                        1 => WitErrorType::ChannelClosed,
+                        2 => WitErrorType::ShuttingDown,
+                        3 => WitErrorType::FunctionNotFound,
+                        4 => WitErrorType::TypeMismatch,
+                        5 => WitErrorType::Internal,
+                        6 => WitErrorType::SerializationError,
+                        7 => WitErrorType::UpdateComponentError,
+                        8 => WitErrorType::Paused,
+                        _ => panic!("invalid enum discriminant"),
+                    }
                 }
             }
         }
@@ -369,6 +415,75 @@ pub mod ntwk {
                         events: result13,
                     };
                     result14
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            pub fn shutdown(data: Option<&[u8]>) -> Result<(), _rt::String> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let (result1_0, result1_1, result1_2) = match data {
+                        Some(e) => {
+                            let vec0 = e;
+                            let ptr0 = vec0.as_ptr().cast::<u8>();
+                            let len0 = vec0.len();
+                            (1i32, ptr0.cast_mut(), len0)
+                        }
+                        None => (0i32, ::core::ptr::null_mut(), 0usize),
+                    };
+                    let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(wasm_import_module = "ntwk:theater/runtime")]
+                    unsafe extern "C" {
+                        #[link_name = "shutdown"]
+                        fn wit_import3(_: i32, _: *mut u8, _: usize, _: *mut u8);
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import3(
+                        _: i32,
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                    ) {
+                        unreachable!()
+                    }
+                    unsafe { wit_import3(result1_0, result1_1, result1_2, ptr2) };
+                    let l4 = i32::from(*ptr2.add(0).cast::<u8>());
+                    let result8 = match l4 {
+                        0 => {
+                            let e = ();
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l5 = *ptr2
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l6 = *ptr2
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len7 = l6;
+                                let bytes7 = _rt::Vec::from_raw_parts(
+                                    l5.cast(),
+                                    len7,
+                                    len7,
+                                );
+                                _rt::string_lift(bytes7)
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result8
                 }
             }
         }
@@ -1009,7 +1124,6 @@ pub mod ntwk {
             #[doc(hidden)]
             static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
             use super::super::super::_rt;
-            pub type Json = super::super::super::ntwk::theater::types::Json;
             pub type ActorId = super::super::super::ntwk::theater::types::ActorId;
             pub type ChannelId = super::super::super::ntwk::theater::types::ChannelId;
             #[allow(unused_unsafe, clippy::all)]
@@ -1158,7 +1272,10 @@ pub mod ntwk {
             /// This function suspends the calling actor's execution until a response is received
             /// or a timeout occurs. The runtime handles the suspension efficiently without
             /// blocking other actors.
-            pub fn request(actor_id: &str, msg: &[u8]) -> Result<Json, _rt::String> {
+            pub fn request(
+                actor_id: &str,
+                msg: &[u8],
+            ) -> Result<_rt::Vec<u8>, _rt::String> {
                 unsafe {
                     #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
                     #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
@@ -2197,7 +2314,6 @@ pub mod exports {
                 #[doc(hidden)]
                 static __FORCE_SECTION_REF: fn() = super::super::super::super::__link_custom_section_describing_imports;
                 use super::super::super::super::_rt;
-                pub type State = super::super::super::super::ntwk::theater::types::State;
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
                 pub unsafe fn _export_init_cabi<T: Guest>(
@@ -2326,9 +2442,9 @@ pub mod exports {
                     /// - The first parameter in the tuple is typically the actor's ID
                     /// - Any error returned will cause the actor to fail to start
                     fn init(
-                        state: State,
+                        state: Option<_rt::Vec<u8>>,
                         params: (_rt::String,),
-                    ) -> Result<(State,), _rt::String>;
+                    ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
                 }
                 #[doc(hidden)]
                 macro_rules! __export_ntwk_theater_actor_cabi {
@@ -2376,7 +2492,7 @@ pub mod exports {
             ///
             /// ```rust
             /// use ntwk::theater::message_server_client::Guest;
-            /// use ntwk::theater::types::{json, channel_accept, channel_id};
+            /// use ntwk::theater::types::{channel_accept, channel_id};
             /// use serde_json::{json, Value};
             ///
             /// struct MyMessageHandler;
@@ -2420,7 +2536,6 @@ pub mod exports {
                 #[doc(hidden)]
                 static __FORCE_SECTION_REF: fn() = super::super::super::super::__link_custom_section_describing_imports;
                 use super::super::super::super::_rt;
-                pub type Json = super::super::super::super::ntwk::theater::types::Json;
                 pub type ChannelId = super::super::super::super::ntwk::theater::types::ChannelId;
                 pub type ChannelAccept = super::super::super::super::ntwk::theater::types::ChannelAccept;
                 #[doc(hidden)]
@@ -3071,7 +3186,7 @@ pub mod exports {
                     ///
                     /// ## Returns
                     ///
-                    /// * `Ok((option<json>,))` - Updated actor state (or None to retain current state)
+                    /// * `Ok((option<list<u8>>,))` - Updated actor state (or None to retain current state)
                     /// * `Err(string)` - Error message if message handling fails
                     ///
                     /// ## Example
@@ -3087,9 +3202,9 @@ pub mod exports {
                     /// }
                     /// ```
                     fn handle_send(
-                        state: Option<Json>,
-                        params: (Json,),
-                    ) -> Result<(Option<Json>,), _rt::String>;
+                        state: Option<_rt::Vec<u8>>,
+                        params: (_rt::Vec<u8>,),
+                    ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
                     /// # Handle request-response message
                     ///
                     /// Processes a request that requires a response.
@@ -3103,7 +3218,7 @@ pub mod exports {
                     ///
                     /// ## Returns
                     ///
-                    /// * `Ok((option<json>, (option<json>,)))` - Tuple containing:
+                    /// * `Ok((option<list<u8>>, (option<list<u8>>,)))` - Tuple containing:
                     ///   * Updated actor state (or None)
                     ///   * Response message to send back (or None to send a response yet)
                     /// * `Err(string)` - Error message if request handling fails
@@ -3123,9 +3238,12 @@ pub mod exports {
                     /// }
                     /// ```
                     fn handle_request(
-                        state: Option<Json>,
-                        params: (_rt::String, Json),
-                    ) -> Result<(Option<Json>, (Option<Json>,)), _rt::String>;
+                        state: Option<_rt::Vec<u8>>,
+                        params: (_rt::String, _rt::Vec<u8>),
+                    ) -> Result<
+                        (Option<_rt::Vec<u8>>, (Option<_rt::Vec<u8>>,)),
+                        _rt::String,
+                    >;
                     /// # Handle channel open request
                     ///
                     /// Called when another actor requests to open a communication channel.
@@ -3138,7 +3256,7 @@ pub mod exports {
                     ///
                     /// ## Returns
                     ///
-                    /// * `Ok((option<json>, (channel-accept,)))` - Tuple containing:
+                    /// * `Ok((option<list<u8>>, (channel-accept,)))` - Tuple containing:
                     ///   * Updated actor state (or None to retain current state)
                     ///   * Channel acceptance decision
                     /// * `Err(string)` - Error message if open handling fails
@@ -3166,9 +3284,9 @@ pub mod exports {
                     /// The actor should validate the channel request and only accept channels from
                     /// trusted sources. The acceptance mechanism provides a security checkpoint.
                     fn handle_channel_open(
-                        state: Option<Json>,
-                        params: (Json,),
-                    ) -> Result<(Option<Json>, (ChannelAccept,)), _rt::String>;
+                        state: Option<_rt::Vec<u8>>,
+                        params: (_rt::Vec<u8>,),
+                    ) -> Result<(Option<_rt::Vec<u8>>, (ChannelAccept,)), _rt::String>;
                     /// # Handle channel message
                     ///
                     /// Processes a message received on an established channel.
@@ -3182,7 +3300,7 @@ pub mod exports {
                     ///
                     /// ## Returns
                     ///
-                    /// * `Ok((option<json>,))` - Updated actor state (or None to retain current state)
+                    /// * `Ok((option<list<u8>>,))` - Updated actor state (or None to retain current state)
                     /// * `Err(string)` - Error message if message handling fails
                     ///
                     /// ## Example
@@ -3200,9 +3318,9 @@ pub mod exports {
                     /// }
                     /// ```
                     fn handle_channel_message(
-                        state: Option<Json>,
-                        params: (ChannelId, Json),
-                    ) -> Result<(Option<Json>,), _rt::String>;
+                        state: Option<_rt::Vec<u8>>,
+                        params: (ChannelId, _rt::Vec<u8>),
+                    ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
                     /// # Handle channel close
                     ///
                     /// Called when a communication channel is closed.
@@ -3215,7 +3333,7 @@ pub mod exports {
                     ///
                     /// ## Returns
                     ///
-                    /// * `Ok((option<json>,))` - Updated actor state (or None to retain current state)
+                    /// * `Ok((option<list<u8>>,))` - Updated actor state (or None to retain current state)
                     /// * `Err(string)` - Error message if close handling fails
                     ///
                     /// ## Example
@@ -3238,9 +3356,9 @@ pub mod exports {
                     /// This function should perform any necessary cleanup for the closed channel,
                     /// such as releasing resources or updating internal state to reflect the channel closure.
                     fn handle_channel_close(
-                        state: Option<Json>,
+                        state: Option<_rt::Vec<u8>>,
                         params: (ChannelId,),
-                    ) -> Result<(Option<Json>,), _rt::String>;
+                    ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
                 }
                 #[doc(hidden)]
                 macro_rules! __export_ntwk_theater_message_server_client_cabi {
@@ -3322,7 +3440,6 @@ pub mod exports {
                 #[doc(hidden)]
                 static __FORCE_SECTION_REF: fn() = super::super::super::super::__link_custom_section_describing_imports;
                 use super::super::super::super::_rt;
-                pub type Json = super::super::super::super::ntwk::theater::types::Json;
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
                 pub unsafe fn _export_handle_stdout_cabi<T: Guest>(
@@ -3639,19 +3756,19 @@ pub mod exports {
                 pub trait Guest {
                     /// Process output event
                     fn handle_stdout(
-                        state: Option<Json>,
+                        state: Option<_rt::Vec<u8>>,
                         params: (u64, _rt::Vec<u8>),
-                    ) -> Result<(Option<Json>,), _rt::String>;
+                    ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
                     /// Process error output event
                     fn handle_stderr(
-                        state: Option<Json>,
+                        state: Option<_rt::Vec<u8>>,
                         params: (u64, _rt::Vec<u8>),
-                    ) -> Result<(Option<Json>,), _rt::String>;
+                    ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
                     /// Process exit event
                     fn handle_exit(
-                        state: Option<Json>,
+                        state: Option<_rt::Vec<u8>>,
                         params: (u64, i32),
-                    ) -> Result<(Option<Json>,), _rt::String>;
+                    ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
                 }
                 #[doc(hidden)]
                 macro_rules! __export_ntwk_theater_process_handlers_cabi {
@@ -3706,8 +3823,8 @@ pub mod exports {
 #[rustfmt::skip]
 mod _rt {
     #![allow(dead_code, clippy::all)]
-    pub use alloc_crate::vec::Vec;
     pub use alloc_crate::string::String;
+    pub use alloc_crate::vec::Vec;
     pub unsafe fn string_lift(bytes: Vec<u8>) -> String {
         if cfg!(debug_assertions) {
             String::from_utf8(bytes).unwrap()
@@ -3872,61 +3989,63 @@ pub(crate) use __export_hello_world_impl as export;
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2206] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x9c\x10\x01A\x02\x01\
-A\x17\x01B\x14\x01p}\x04\0\x04json\x03\0\0\x01p}\x01k\x02\x04\0\x05state\x03\0\x03\
-\x01s\x04\0\x08actor-id\x03\0\x05\x01s\x04\0\x0achannel-id\x03\0\x07\x01k\x01\x01\
-r\x02\x08accepted\x7f\x07message\x09\x04\0\x0echannel-accept\x03\0\x0a\x01kw\x01\
-r\x03\x0aevent-types\x06parent\x0c\x04data\x01\x04\0\x05event\x03\0\x0d\x01r\x02\
-\x04hashw\x05event\x0e\x04\0\x0ameta-event\x03\0\x0f\x01p\x10\x01r\x01\x06events\
-\x11\x04\0\x05chain\x03\0\x12\x03\0\x12ntwk:theater/types\x05\0\x02\x03\0\0\x04j\
-son\x02\x03\0\0\x05chain\x02\x03\0\0\x08actor-id\x01B\x0a\x02\x03\x02\x01\x01\x04\
-\0\x04json\x03\0\0\x02\x03\x02\x01\x02\x04\0\x05chain\x03\0\x02\x02\x03\x02\x01\x03\
-\x04\0\x08actor-id\x03\0\x04\x01@\x01\x03msgs\x01\0\x04\0\x03log\x01\x06\x01@\0\0\
-\x03\x04\0\x09get-chain\x01\x07\x03\0\x14ntwk:theater/runtime\x05\x04\x01B\x1d\x02\
-\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x01q\x04\x03raw\0\0\x0cline-by-line\0\0\x04\
-json\0\0\x07chunked\0\0\x04\0\x0boutput-mode\x03\0\x02\x01ps\x01ks\x01o\x02ss\x01\
-p\x06\x01ky\x01r\x08\x07programs\x04args\x04\x03cwd\x05\x03env\x07\x0bbuffer-siz\
-ey\x0bstdout-mode\x03\x0bstderr-mode\x03\x0achunk-size\x08\x04\0\x0eprocess-conf\
-ig\x03\0\x09\x01kz\x01r\x04\x03pidw\x07running\x7f\x09exit-code\x0b\x0astart-tim\
-ew\x04\0\x0eprocess-status\x03\0\x0c\x01j\x01w\x01s\x01@\x01\x06config\x0a\0\x0e\
-\x04\0\x08os-spawn\x01\x0f\x01p}\x01j\x01y\x01s\x01@\x02\x03pidw\x04data\x10\0\x11\
-\x04\0\x0eos-write-stdin\x01\x12\x01j\x01\x0d\x01s\x01@\x01\x03pidw\0\x13\x04\0\x09\
-os-status\x01\x14\x01j\0\x01s\x01@\x02\x03pidw\x06signaly\0\x15\x04\0\x09os-sign\
-al\x01\x16\x01@\x01\x03pidw\0\x15\x04\0\x07os-kill\x01\x17\x03\0\x14ntwk:theater\
-/process\x05\x05\x02\x03\0\0\x0achannel-id\x01B\x1a\x02\x03\x02\x01\x01\x04\0\x04\
-json\x03\0\0\x02\x03\x02\x01\x03\x04\0\x08actor-id\x03\0\x02\x02\x03\x02\x01\x06\
-\x04\0\x0achannel-id\x03\0\x04\x01j\0\x01s\x01@\x02\x08actor-id\x03\x03msg\x01\0\
-\x06\x04\0\x04send\x01\x07\x01j\x01\x01\x01s\x01@\x02\x08actor-id\x03\x03msg\x01\
-\0\x08\x04\0\x07request\x01\x09\x01j\x01\x05\x01s\x01@\x02\x08actor-id\x03\x0bin\
-itial-msg\x01\0\x0a\x04\0\x0copen-channel\x01\x0b\x01@\x02\x0achannel-id\x05\x03\
-msg\x01\0\x06\x04\0\x0fsend-on-channel\x01\x0c\x01@\x01\x0achannel-id\x05\0\x06\x04\
-\0\x0dclose-channel\x01\x0d\x01ps\x01@\0\0\x0e\x04\0\x19list-outstanding-request\
-s\x01\x0f\x01@\x02\x0arequest-ids\x08response\x01\0\x06\x04\0\x12respond-to-requ\
-est\x01\x10\x01@\x01\x0arequest-ids\0\x06\x04\0\x0ecancel-request\x01\x11\x03\0\x20\
-ntwk:theater/message-server-host\x05\x07\x01B\x07\x01@\0\0w\x04\0\x03now\x01\0\x01\
-j\0\x01s\x01@\x01\x08durationw\0\x01\x04\0\x05sleep\x01\x02\x01@\x01\x09timestam\
-pw\0\x01\x04\0\x08deadline\x01\x03\x03\0\x13ntwk:theater/timing\x05\x08\x02\x03\0\
-\0\x05state\x01B\x07\x02\x03\x02\x01\x09\x04\0\x05state\x03\0\0\x01o\x01s\x01o\x01\
-\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\0\x04init\x01\
-\x05\x04\0\x12ntwk:theater/actor\x05\x0a\x02\x03\0\0\x05event\x02\x03\0\0\x0echa\
-nnel-accept\x01B\x1e\x02\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x02\x03\x02\x01\x0b\
-\x04\0\x05event\x03\0\x02\x02\x03\x02\x01\x06\x04\0\x0achannel-id\x03\0\x04\x02\x03\
-\x02\x01\x0c\x04\0\x0echannel-accept\x03\0\x06\x01k\x01\x01o\x01\x01\x01o\x01\x08\
-\x01j\x01\x0a\x01s\x01@\x02\x05state\x08\x06params\x09\0\x0b\x04\0\x0bhandle-sen\
-d\x01\x0c\x01o\x02s\x01\x01o\x02\x08\x0a\x01j\x01\x0e\x01s\x01@\x02\x05state\x08\
-\x06params\x0d\0\x0f\x04\0\x0ehandle-request\x01\x10\x01o\x01\x07\x01o\x02\x08\x11\
-\x01j\x01\x12\x01s\x01@\x02\x05state\x08\x06params\x09\0\x13\x04\0\x13handle-cha\
-nnel-open\x01\x14\x01o\x02\x05\x01\x01@\x02\x05state\x08\x06params\x15\0\x0b\x04\
-\0\x16handle-channel-message\x01\x16\x01o\x01\x05\x01@\x02\x05state\x08\x06param\
-s\x17\0\x0b\x04\0\x14handle-channel-close\x01\x18\x04\0\"ntwk:theater/message-se\
-rver-client\x05\x0d\x01B\x0d\x02\x03\x02\x01\x01\x04\0\x04json\x03\0\0\x01k\x01\x01\
-p}\x01o\x02w\x03\x01o\x01\x02\x01j\x01\x05\x01s\x01@\x02\x05state\x02\x06params\x04\
-\0\x06\x04\0\x0dhandle-stdout\x01\x07\x04\0\x0dhandle-stderr\x01\x07\x01o\x02wz\x01\
-@\x02\x05state\x02\x06params\x08\0\x06\x04\0\x0bhandle-exit\x01\x09\x04\0\x1dntw\
-k:theater/process-handlers\x05\x0e\x04\0\x18ntwk:theater/hello-world\x04\0\x0b\x11\
-\x01\0\x0bhello-world\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-com\
-ponent\x070.227.1\x10wit-bindgen-rust\x060.41.0";
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2388] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xd2\x11\x01A\x02\x01\
+A\x15\x01B\x16\x01s\x04\0\x08actor-id\x03\0\0\x01s\x04\0\x0achannel-id\x03\0\x02\
+\x01p}\x01k\x04\x01r\x02\x08accepted\x7f\x07message\x05\x04\0\x0echannel-accept\x03\
+\0\x06\x01kw\x01r\x03\x0aevent-types\x06parent\x08\x04data\x04\x04\0\x05event\x03\
+\0\x09\x01r\x02\x04hashw\x05event\x0a\x04\0\x0ameta-event\x03\0\x0b\x01p\x0c\x01\
+r\x01\x06events\x0d\x04\0\x05chain\x03\0\x0e\x01r\x05\x04hash\x04\x0bparent-hash\
+\x05\x0aevent-types\x04data\x04\x09timestampw\x04\0\x0bchain-event\x03\0\x10\x01\
+m\x09\x11operation-timeout\x0echannel-closed\x0dshutting-down\x12function-not-fo\
+und\x0dtype-mismatch\x08internal\x13serialization-error\x16update-component-erro\
+r\x06paused\x04\0\x0ewit-error-type\x03\0\x12\x01r\x02\x0aerror-type\x13\x04data\
+\x05\x04\0\x0fwit-actor-error\x03\0\x14\x03\0\x12ntwk:theater/types\x05\0\x02\x03\
+\0\0\x05chain\x02\x03\0\0\x08actor-id\x01B\x0d\x02\x03\x02\x01\x01\x04\0\x05chai\
+n\x03\0\0\x02\x03\x02\x01\x02\x04\0\x08actor-id\x03\0\x02\x01@\x01\x03msgs\x01\0\
+\x04\0\x03log\x01\x04\x01@\0\0\x01\x04\0\x09get-chain\x01\x05\x01p}\x01k\x06\x01\
+j\0\x01s\x01@\x01\x04data\x07\0\x08\x04\0\x08shutdown\x01\x09\x03\0\x14ntwk:thea\
+ter/runtime\x05\x03\x01B\x1b\x01q\x04\x03raw\0\0\x0cline-by-line\0\0\x04json\0\0\
+\x07chunked\0\0\x04\0\x0boutput-mode\x03\0\0\x01ps\x01ks\x01o\x02ss\x01p\x04\x01\
+ky\x01r\x08\x07programs\x04args\x02\x03cwd\x03\x03env\x05\x0bbuffer-sizey\x0bstd\
+out-mode\x01\x0bstderr-mode\x01\x0achunk-size\x06\x04\0\x0eprocess-config\x03\0\x07\
+\x01kz\x01r\x04\x03pidw\x07running\x7f\x09exit-code\x09\x0astart-timew\x04\0\x0e\
+process-status\x03\0\x0a\x01j\x01w\x01s\x01@\x01\x06config\x08\0\x0c\x04\0\x08os\
+-spawn\x01\x0d\x01p}\x01j\x01y\x01s\x01@\x02\x03pidw\x04data\x0e\0\x0f\x04\0\x0e\
+os-write-stdin\x01\x10\x01j\x01\x0b\x01s\x01@\x01\x03pidw\0\x11\x04\0\x09os-stat\
+us\x01\x12\x01j\0\x01s\x01@\x02\x03pidw\x06signaly\0\x13\x04\0\x09os-signal\x01\x14\
+\x01@\x01\x03pidw\0\x13\x04\0\x07os-kill\x01\x15\x03\0\x14ntwk:theater/process\x05\
+\x04\x02\x03\0\0\x0achannel-id\x01B\x19\x02\x03\x02\x01\x02\x04\0\x08actor-id\x03\
+\0\0\x02\x03\x02\x01\x05\x04\0\x0achannel-id\x03\0\x02\x01p}\x01j\0\x01s\x01@\x02\
+\x08actor-id\x01\x03msg\x04\0\x05\x04\0\x04send\x01\x06\x01j\x01\x04\x01s\x01@\x02\
+\x08actor-id\x01\x03msg\x04\0\x07\x04\0\x07request\x01\x08\x01j\x01\x03\x01s\x01\
+@\x02\x08actor-id\x01\x0binitial-msg\x04\0\x09\x04\0\x0copen-channel\x01\x0a\x01\
+@\x02\x0achannel-id\x03\x03msg\x04\0\x05\x04\0\x0fsend-on-channel\x01\x0b\x01@\x01\
+\x0achannel-id\x03\0\x05\x04\0\x0dclose-channel\x01\x0c\x01ps\x01@\0\0\x0d\x04\0\
+\x19list-outstanding-requests\x01\x0e\x01@\x02\x0arequest-ids\x08response\x04\0\x05\
+\x04\0\x12respond-to-request\x01\x0f\x01@\x01\x0arequest-ids\0\x05\x04\0\x0ecanc\
+el-request\x01\x10\x03\0\x20ntwk:theater/message-server-host\x05\x06\x01B\x07\x01\
+@\0\0w\x04\0\x03now\x01\0\x01j\0\x01s\x01@\x01\x08durationw\0\x01\x04\0\x05sleep\
+\x01\x02\x01@\x01\x09timestampw\0\x01\x04\0\x08deadline\x01\x03\x03\0\x13ntwk:th\
+eater/timing\x05\x07\x01B\x07\x01p}\x01k\0\x01o\x01s\x01o\x01\x01\x01j\x01\x03\x01\
+s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\0\x04init\x01\x05\x04\0\x12ntwk:\
+theater/actor\x05\x08\x02\x03\0\0\x05event\x02\x03\0\0\x0echannel-accept\x01B\x1d\
+\x02\x03\x02\x01\x09\x04\0\x05event\x03\0\0\x02\x03\x02\x01\x05\x04\0\x0achannel\
+-id\x03\0\x02\x02\x03\x02\x01\x0a\x04\0\x0echannel-accept\x03\0\x04\x01p}\x01k\x06\
+\x01o\x01\x06\x01o\x01\x07\x01j\x01\x09\x01s\x01@\x02\x05state\x07\x06params\x08\
+\0\x0a\x04\0\x0bhandle-send\x01\x0b\x01o\x02s\x06\x01o\x02\x07\x09\x01j\x01\x0d\x01\
+s\x01@\x02\x05state\x07\x06params\x0c\0\x0e\x04\0\x0ehandle-request\x01\x0f\x01o\
+\x01\x05\x01o\x02\x07\x10\x01j\x01\x11\x01s\x01@\x02\x05state\x07\x06params\x08\0\
+\x12\x04\0\x13handle-channel-open\x01\x13\x01o\x02\x03\x06\x01@\x02\x05state\x07\
+\x06params\x14\0\x0a\x04\0\x16handle-channel-message\x01\x15\x01o\x01\x03\x01@\x02\
+\x05state\x07\x06params\x16\0\x0a\x04\0\x14handle-channel-close\x01\x17\x04\0\"n\
+twk:theater/message-server-client\x05\x0b\x01B\x0b\x01p}\x01k\0\x01o\x02w\0\x01o\
+\x01\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\0\x0dha\
+ndle-stdout\x01\x05\x04\0\x0dhandle-stderr\x01\x05\x01o\x02wz\x01@\x02\x05state\x01\
+\x06params\x06\0\x04\x04\0\x0bhandle-exit\x01\x07\x04\0\x1dntwk:theater/process-\
+handlers\x05\x0c\x04\0\x18ntwk:theater/hello-world\x04\0\x0b\x11\x01\0\x0bhello-\
+world\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.227.\
+1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

@@ -7,6 +7,7 @@ use crate::bindings::ntwk::theater::message_server_host::{respond_to_request, se
 use crate::bindings::ntwk::theater::process::{os_spawn, os_write_stdin, OutputMode};
 use crate::bindings::ntwk::theater::runtime::log;
 
+use bindings::ntwk::theater::types::ChannelAccept;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -95,15 +96,21 @@ impl AppState {
     }
 
     fn send_next_unsent(&mut self) -> Result<(), String> {
+        log("Sending next unsent request");
         if let Some(request) = self.unsent_requests.pop() {
-            log(&format!("Sending next unsent request: {:?}", request));
+            log(&format!("next unsent request: {:?}", request));
+            // Add the request to pending requests
+            self.pending_requests
+                .insert(request.id.clone(), request.clone());
+            log(&format!("Pending requests: {:?}", self.pending_requests));
+
             let request_json = serde_json::to_string(&request).map_err(|e| e.to_string())? + "\n";
             os_write_stdin(self.server_pid.unwrap(), request_json.as_bytes())
                 .map_err(|e| format!("Failed to write to stdin: {}", e))?;
 
             // If there are more unsent requests, send ourselves a message to send the next one
             if !self.unsent_requests.is_empty() {
-                log("Scheduling next unsent request");
+                log("More unsent requests, sending ourselves a message to send the next one");
                 let send_request = SendUnsentRequests {};
                 let send_request_json = serde_json::to_string(&send_request)
                     .map_err(|e| format!("Failed to serialize send request: {}", e))?;
@@ -111,6 +118,78 @@ impl AppState {
                     .map_err(|e| format!("Failed to send message: {}", e))?;
             } else {
                 log("No more unsent requests");
+            }
+        } else {
+            log("No unsent requests to send");
+        }
+
+        Ok(())
+    }
+
+    fn handle_process_stdout(self: &mut Self, stdout_data: String) -> Result<(), String> {
+        log("Handling process stdout data");
+
+        match serde_json::from_str::<McpResponse>(&stdout_data) {
+            Ok(response) => {
+                log(&format!("Parsed MCP response: {:?}", response));
+
+                if response.id == INITIALIZE_REQUEST_ID {
+                    log("Received initialization response");
+                    if response.error.is_none() {
+                        log("Server initialization successful");
+                        self.server_initialized = true;
+
+                        // Send the initialized notification after initializing
+                        let pid = self.server_pid.expect("Missing server PID");
+                        let init_notification = json!({
+                                    "jsonrpc": "2.0",
+                        "method": "notifications/initialized"
+                                });
+
+                        let notification_json = serde_json::to_string(&init_notification)
+                            .map_err(|e| format!("Failed to serialize notification: {}", e))?
+                            + "\n";
+
+                        log("Sending initialized notification");
+                        os_write_stdin(pid, notification_json.as_bytes())
+                            .map_err(|e| format!("Failed to send notification: {}", e))?;
+
+                        log("MCP connection established. Ready for commands.");
+                        self.server_initialized = true;
+                        if self.unsent_requests.is_empty() {
+                            log("No unsent requests to send");
+                        } else {
+                            log("Sending next unsent request");
+                            self.send_next_unsent()?;
+                        }
+                    } else if let Some(error) = &response.error {
+                        log(&format!(
+                            "Server initialization failed: {} (code: {})",
+                            error.message, error.code
+                        ));
+                    }
+                } else {
+                    respond_to_request(
+                        &response.id,
+                        &serde_json::to_vec(&response)
+                            .map_err(|e| e.to_string())
+                            .expect("Failed to serialize response"),
+                    )
+                    .map_err(|e| format!("Failed to respond to request: {}", e))?;
+
+                    log(&format!(
+                        "Responded to request {} with result: {:?}",
+                        response.id, response.result
+                    ));
+
+                    // Remove the request from pending requests
+                    self.pending_requests
+                        .remove(&response.id)
+                        .ok_or_else(|| format!("Request ID {} not found", response.id))?;
+                }
+            }
+            Err(e) => {
+                log(&format!("Failed to parse MCP response: {}", e));
             }
         }
 
@@ -239,19 +318,30 @@ impl ProcessHandlers for Actor {
         let (pid, data) = params;
         log(&format!("Process {} stdout: {:?}", pid, data));
 
+        let mut app_state: AppState = match state {
+            Some(state_bytes) if !state_bytes.is_empty() => serde_json::from_slice(&state_bytes)
+                .map_err(|e| format!("Failed to deserialize state: {}", e))?,
+            _ => return Err("Invalid state".to_string()),
+        };
+
         // Try to parse the data as UTF-8
         if let Ok(stdout_data) = String::from_utf8(data.clone()) {
             log(&format!("Received stdout: [{}] {} ", pid, stdout_data));
 
             // Process the stdout data using our specialized handler
-            return handle_process_stdout(state, stdout_data);
+            app_state
+                .handle_process_stdout(stdout_data)
+                .expect("Failed to handle process stdout data");
         } else {
             log("Received non-UTF8 data on stdout");
             log(&format!("non-UTF8 data: [{}] {:?}", pid, data).to_string());
         }
 
+        let state_bytes = serde_json::to_vec(&app_state)
+            .map_err(|e| format!("Failed to serialize updated state: {}", e))?;
+
         // If we can't parse as UTF-8, just return the state unchanged
-        Ok((state,))
+        Ok((Some(state_bytes),))
     }
 
     fn handle_stderr(
@@ -316,6 +406,7 @@ impl MessageServerClient for Actor {
         params: (String, Vec<u8>),
     ) -> Result<(Option<Vec<u8>>, (Option<Vec<u8>>,)), String> {
         log("Handling request message");
+        log("new version");
         let (request_id, request) = params;
         log(&format!("Request ID: {}", request_id));
         log(&format!("Request data: {:?}", request));
@@ -353,11 +444,6 @@ impl MessageServerClient for Actor {
             McpActorRequest::ToolsCall { name, args } => {
                 log("Received tools_call request");
 
-                // Check if server is initialized
-                if !app_state.server_initialized {
-                    return Err("MCP server not initialized".to_string());
-                }
-
                 // Send tools/call request
                 McpRequest {
                     jsonrpc: "2.0".to_string(),
@@ -371,13 +457,18 @@ impl MessageServerClient for Actor {
             }
         };
 
+        // Log the request
+        log(&format!("MCP request: {:?}", mcp_request));
+
         // Add the request to the unsent requests
         app_state.unsent_requests.push(mcp_request);
 
         // If the server is initialized, send the next unsent request
         if app_state.server_initialized {
             log("Server initialized, sending next unsent request");
-            app_state.send_next_unsent()?;
+            app_state
+                .send_next_unsent()
+                .expect("Failed to send next unsent request");
         } else {
             log("Server not initialized, deferring request");
         }
@@ -390,122 +481,34 @@ impl MessageServerClient for Actor {
     }
 
     fn handle_channel_open(
-        state: Option<bindings::exports::ntwk::theater::message_server_client::Json>,
-        _params: (bindings::exports::ntwk::theater::message_server_client::Json,),
-    ) -> Result<
-        (
-            Option<bindings::exports::ntwk::theater::message_server_client::Json>,
-            (bindings::exports::ntwk::theater::message_server_client::ChannelAccept,),
-        ),
-        String,
-    > {
+        state: Option<Vec<u8>>,
+        _params: (Vec<u8>,),
+    ) -> Result<(Option<Vec<u8>>, (ChannelAccept,)), String> {
         Ok((
             state,
-            (
-                bindings::exports::ntwk::theater::message_server_client::ChannelAccept {
-                    accepted: true,
-                    message: None,
-                },
-            ),
+            (ChannelAccept {
+                accepted: true,
+                message: None,
+            },),
         ))
     }
 
     fn handle_channel_close(
-        state: Option<bindings::exports::ntwk::theater::message_server_client::Json>,
+        state: Option<Vec<u8>>,
         _params: (String,),
-    ) -> Result<(Option<bindings::exports::ntwk::theater::message_server_client::Json>,), String>
-    {
+    ) -> Result<(Option<Vec<u8>>,), String> {
         Ok((state,))
     }
 
     fn handle_channel_message(
-        state: Option<bindings::exports::ntwk::theater::message_server_client::Json>,
-        _params: (
-            String,
-            bindings::exports::ntwk::theater::message_server_client::Json,
-        ),
-    ) -> Result<(Option<bindings::exports::ntwk::theater::message_server_client::Json>,), String>
-    {
+        state: Option<Vec<u8>>,
+        _params: (String, Vec<u8>),
+    ) -> Result<(Option<Vec<u8>>,), String> {
         log("mcp-poc: Received channel message");
         Ok((state,))
     }
 }
 
 // Helper function to handle process stdout data in a message
-fn handle_process_stdout(
-    state: Option<Vec<u8>>,
-    stdout_data: String,
-) -> Result<(Option<Vec<u8>>,), String> {
-    log("Handling process stdout data");
-
-    // Parse the current state
-    let state_bytes = state.unwrap_or_default();
-    if state_bytes.is_empty() {
-        return Ok((None,));
-    }
-
-    let mut app_state: AppState = serde_json::from_slice(&state_bytes)
-        .map_err(|e| format!("Failed to deserialize state: {}", e))?;
-
-    match serde_json::from_str::<McpResponse>(&stdout_data) {
-        Ok(response) => {
-            log(&format!("Parsed MCP response: {:?}", response));
-
-            if response.id == INITIALIZE_REQUEST_ID {
-                log("Received initialization response");
-                if response.error.is_none() {
-                    log("Server initialization successful");
-                    app_state.server_initialized = true;
-
-                    // Send the initialized notification after initializing
-                    let pid = app_state.server_pid.expect("Missing server PID");
-                    let init_notification = json!({
-                                "jsonrpc": "2.0",
-                    "method": "notifications/initialized"
-                            });
-
-                    let notification_json = serde_json::to_string(&init_notification)
-                        .map_err(|e| format!("Failed to serialize notification: {}", e))?
-                        + "\n";
-
-                    log("Sending initialized notification");
-                    os_write_stdin(pid, notification_json.as_bytes())
-                        .map_err(|e| format!("Failed to send notification: {}", e))?;
-
-                    log("MCP connection established. Ready for commands.");
-                    app_state.server_initialized = true;
-                    if app_state.unsent_requests.is_empty() {
-                        log("No unsent requests to send");
-                    } else {
-                        log("Sending next unsent request");
-                        app_state.send_next_unsent()?;
-                    }
-                } else if let Some(error) = &response.error {
-                    log(&format!(
-                        "Server initialization failed: {} (code: {})",
-                        error.message, error.code
-                    ));
-                }
-            } else {
-                respond_to_request(
-                    &response.id,
-                    &serde_json::to_vec(&response).map_err(|e| e.to_string())?,
-                )
-                .map_err(|e| format!("Failed to respond to request: {}", e))?;
-            }
-
-            return Ok((Some(state_bytes),));
-        }
-        Err(e) => {
-            log(&format!("Failed to parse MCP response: {}", e));
-        }
-    }
-
-    // Serialize and return the updated state
-    let updated_state = serde_json::to_vec(&app_state)
-        .map_err(|e| format!("Failed to serialize updated state: {}", e))?;
-
-    Ok((Some(updated_state),))
-}
 
 bindings::export!(Actor with_types_in bindings);

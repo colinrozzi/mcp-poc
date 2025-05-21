@@ -1,22 +1,24 @@
 name = "mcp-poc"
 version = "0.1.0"
+component_path = "/Users/colinrozzi/work/actors/mcp-poc/./target/wasm32-unknown-unknown/release/mcp_poc.wasm"
 description = "MCP Server Integration Proof of Concept"
-component_path = "/Users/colinrozzi/work/actors/mcp-poc/target/wasm32-unknown-unknown/release/mcp_poc.wasm"
 init_state = "/Users/colinrozzi/work/actors/mcp-poc/fs-server.json"
-
-[interface]
-implements = "ntwk:theater/actor"
-requires = []
 
 [[handlers]]
 type = "runtime"
-config = {}
+
+[handlers.config]
 
 [[handlers]]
 type = "process"
-config = {}
+
+[handlers.config]
+max_processes = 10
+max_output_buffer = 1048576
 
 [[handlers]]
 type = "timing"
-config = {}
 
+[handlers.config]
+max_sleep_duration = 3600000
+min_sleep_duration = 1
