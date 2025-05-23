@@ -1,8 +1,13 @@
 name = "mcp-poc"
 version = "0.1.0"
-component_path = "/Users/colinrozzi/work/actors/mcp-poc/./target/wasm32-unknown-unknown/release/mcp_poc.wasm"
+component = "/Users/colinrozzi/work/actors/mcp-poc/./target/wasm32-unknown-unknown/release/mcp_poc.wasm"
 description = "MCP Server Integration Proof of Concept"
 init_state = "/Users/colinrozzi/work/actors/mcp-poc/fs-server.json"
+
+[[handlers]]
+type = "message-server"
+
+[handlers.config]
 
 [[handlers]]
 type = "runtime"

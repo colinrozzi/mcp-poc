@@ -2803,10 +2803,14 @@ pub mod exports {
                     arg2: usize,
                     arg3: *mut u8,
                     arg4: usize,
+                    arg5: *mut u8,
+                    arg6: usize,
                 ) -> *mut u8 {
                     #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
                     let len1 = arg4;
-                    let result2 = T::handle_channel_open(
+                    let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
+                    let len2 = arg6;
+                    let result3 = T::handle_channel_open(
                         match arg0 {
                             0 => None,
                             1 => {
@@ -2818,84 +2822,87 @@ pub mod exports {
                             }
                             _ => _rt::invalid_enum_discriminant(),
                         },
-                        (_rt::Vec::from_raw_parts(arg3.cast(), len1, len1),),
+                        (
+                            _rt::string_lift(bytes1),
+                            _rt::Vec::from_raw_parts(arg5.cast(), len2, len2),
+                        ),
                     );
-                    let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
-                    match result2 {
+                    let ptr4 = (&raw mut _RET_AREA.0).cast::<u8>();
+                    match result3 {
                         Ok(e) => {
-                            *ptr3.add(0).cast::<u8>() = (0i32) as u8;
-                            let (t4_0, t4_1) = e;
-                            match t4_0 {
+                            *ptr4.add(0).cast::<u8>() = (0i32) as u8;
+                            let (t5_0, t5_1) = e;
+                            match t5_0 {
                                 Some(e) => {
-                                    *ptr3
+                                    *ptr4
                                         .add(::core::mem::size_of::<*const u8>())
                                         .cast::<u8>() = (1i32) as u8;
-                                    let vec5 = (e).into_boxed_slice();
-                                    let ptr5 = vec5.as_ptr().cast::<u8>();
-                                    let len5 = vec5.len();
-                                    ::core::mem::forget(vec5);
-                                    *ptr3
+                                    let vec6 = (e).into_boxed_slice();
+                                    let ptr6 = vec6.as_ptr().cast::<u8>();
+                                    let len6 = vec6.len();
+                                    ::core::mem::forget(vec6);
+                                    *ptr4
                                         .add(3 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<usize>() = len5;
-                                    *ptr3
+                                        .cast::<usize>() = len6;
+                                    *ptr4
                                         .add(2 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<*mut u8>() = ptr5.cast_mut();
+                                        .cast::<*mut u8>() = ptr6.cast_mut();
                                 }
                                 None => {
-                                    *ptr3
+                                    *ptr4
                                         .add(::core::mem::size_of::<*const u8>())
                                         .cast::<u8>() = (0i32) as u8;
                                 }
                             };
-                            let (t6_0,) = t4_1;
+                            let (t7_0,) = t5_1;
                             let super::super::super::super::ntwk::theater::types::ChannelAccept {
-                                accepted: accepted7,
-                                message: message7,
-                            } = t6_0;
-                            *ptr3
+                                accepted: accepted8,
+                                message: message8,
+                            } = t7_0;
+                            *ptr4
                                 .add(4 * ::core::mem::size_of::<*const u8>())
-                                .cast::<u8>() = (match accepted7 {
+                                .cast::<u8>() = (match accepted8 {
                                 true => 1,
                                 false => 0,
                             }) as u8;
-                            match message7 {
+                            match message8 {
                                 Some(e) => {
-                                    *ptr3
+                                    *ptr4
                                         .add(5 * ::core::mem::size_of::<*const u8>())
                                         .cast::<u8>() = (1i32) as u8;
-                                    let vec8 = (e).into_boxed_slice();
-                                    let ptr8 = vec8.as_ptr().cast::<u8>();
-                                    let len8 = vec8.len();
-                                    ::core::mem::forget(vec8);
-                                    *ptr3
+                                    let vec9 = (e).into_boxed_slice();
+                                    let ptr9 = vec9.as_ptr().cast::<u8>();
+                                    let len9 = vec9.len();
+                                    ::core::mem::forget(vec9);
+                                    *ptr4
                                         .add(7 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<usize>() = len8;
-                                    *ptr3
+                                        .cast::<usize>() = len9;
+                                    *ptr4
                                         .add(6 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<*mut u8>() = ptr8.cast_mut();
+                                        .cast::<*mut u8>() = ptr9.cast_mut();
                                 }
                                 None => {
-                                    *ptr3
+                                    *ptr4
                                         .add(5 * ::core::mem::size_of::<*const u8>())
                                         .cast::<u8>() = (0i32) as u8;
                                 }
                             };
                         }
                         Err(e) => {
-                            *ptr3.add(0).cast::<u8>() = (1i32) as u8;
-                            let vec9 = (e.into_bytes()).into_boxed_slice();
-                            let ptr9 = vec9.as_ptr().cast::<u8>();
-                            let len9 = vec9.len();
-                            ::core::mem::forget(vec9);
-                            *ptr3
+                            *ptr4.add(0).cast::<u8>() = (1i32) as u8;
+                            let vec10 = (e.into_bytes()).into_boxed_slice();
+                            let ptr10 = vec10.as_ptr().cast::<u8>();
+                            let len10 = vec10.len();
+                            ::core::mem::forget(vec10);
+                            *ptr4
                                 .add(2 * ::core::mem::size_of::<*const u8>())
-                                .cast::<usize>() = len9;
-                            *ptr3
+                                .cast::<usize>() = len10;
+                            *ptr4
                                 .add(::core::mem::size_of::<*const u8>())
-                                .cast::<*mut u8>() = ptr9.cast_mut();
+                                .cast::<*mut u8>() = ptr10.cast_mut();
                         }
                     };
-                    ptr3
+                    ptr4
                 }
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
@@ -3285,7 +3292,7 @@ pub mod exports {
                     /// trusted sources. The acceptance mechanism provides a security checkpoint.
                     fn handle_channel_open(
                         state: Option<_rt::Vec<u8>>,
-                        params: (_rt::Vec<u8>,),
+                        params: (_rt::String, _rt::Vec<u8>),
                     ) -> Result<(Option<_rt::Vec<u8>>, (ChannelAccept,)), _rt::String>;
                     /// # Handle channel message
                     ///
@@ -3386,10 +3393,10 @@ pub mod exports {
                         (export_name =
                         "ntwk:theater/message-server-client#handle-channel-open")] unsafe
                         extern "C" fn export_handle_channel_open(arg0 : i32, arg1 : * mut
-                        u8, arg2 : usize, arg3 : * mut u8, arg4 : usize,) -> * mut u8 {
-                        unsafe { $($path_to_types)*::
+                        u8, arg2 : usize, arg3 : * mut u8, arg4 : usize, arg5 : * mut u8,
+                        arg6 : usize,) -> * mut u8 { unsafe { $($path_to_types)*::
                         _export_handle_channel_open_cabi::<$ty > (arg0, arg1, arg2, arg3,
-                        arg4) } } #[unsafe (export_name =
+                        arg4, arg5, arg6) } } #[unsafe (export_name =
                         "cabi_post_ntwk:theater/message-server-client#handle-channel-open")]
                         unsafe extern "C" fn _post_return_handle_channel_open(arg0 : *
                         mut u8,) { unsafe { $($path_to_types)*::
@@ -4035,7 +4042,7 @@ theater/actor\x05\x08\x02\x03\0\0\x05event\x02\x03\0\0\x0echannel-accept\x01B\x1
 \x01o\x01\x06\x01o\x01\x07\x01j\x01\x09\x01s\x01@\x02\x05state\x07\x06params\x08\
 \0\x0a\x04\0\x0bhandle-send\x01\x0b\x01o\x02s\x06\x01o\x02\x07\x09\x01j\x01\x0d\x01\
 s\x01@\x02\x05state\x07\x06params\x0c\0\x0e\x04\0\x0ehandle-request\x01\x0f\x01o\
-\x01\x05\x01o\x02\x07\x10\x01j\x01\x11\x01s\x01@\x02\x05state\x07\x06params\x08\0\
+\x01\x05\x01o\x02\x07\x10\x01j\x01\x11\x01s\x01@\x02\x05state\x07\x06params\x0c\0\
 \x12\x04\0\x13handle-channel-open\x01\x13\x01o\x02\x03\x06\x01@\x02\x05state\x07\
 \x06params\x14\0\x0a\x04\0\x16handle-channel-message\x01\x15\x01o\x01\x03\x01@\x02\
 \x05state\x07\x06params\x16\0\x0a\x04\0\x14handle-channel-close\x01\x17\x04\0\"n\

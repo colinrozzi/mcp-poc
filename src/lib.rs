@@ -482,7 +482,7 @@ impl MessageServerClient for Actor {
 
     fn handle_channel_open(
         state: Option<Vec<u8>>,
-        _params: (Vec<u8>,),
+        _params: (String, Vec<u8>),
     ) -> Result<(Option<Vec<u8>>, (ChannelAccept,)), String> {
         Ok((
             state,
