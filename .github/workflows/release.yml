@@ -1,0 +1,45 @@
+name: Release Actor
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v0.1.0, v1.2.3, etc.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Build and prepare release
+        uses: ./.github/actions/release-actor
+        
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            component.wasm
+            manifest.toml
+            init.json
+          body: |
+            ## Actor Release ${{ steps.version.outputs.VERSION }}
+            
+            This release contains the WebAssembly component and updated manifest.
+            
+            ### Usage
+            Reference the actor by its manifest URL (the file name will match the actor name):
+            ```
+            https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/manifest.toml
+            ```
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
