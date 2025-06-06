@@ -3,8 +3,8 @@
 //   * runtime_path: "wit_bindgen_rt"
 #[rustfmt::skip]
 #[allow(dead_code, clippy::all)]
-pub mod ntwk {
-    pub mod theater {
+pub mod theater {
+    pub mod simple {
         /// # Common Type Definitions
         ///
         /// Defines shared types used across multiple interfaces in the Theater system.
@@ -28,11 +28,11 @@ pub mod ntwk {
         /// These types are typically imported and used in actor implementations:
         ///
         /// ```rust
-        /// use ntwk::theater::types::actor_id;
+        /// use theater::simple::types::actor_id;
         ///
         /// // Using actor-id for referring to actors
         /// fn get_actor_info(id: actor_id) -> String {
-        ///     format!("Info for actor {}", id)
+        /// format!("Info for actor {}", id)
         /// }
         /// ```
         ///
@@ -254,7 +254,7 @@ pub mod ntwk {
             #[doc(hidden)]
             static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
             use super::super::super::_rt;
-            pub type Chain = super::super::super::ntwk::theater::types::Chain;
+            pub type Chain = super::super::super::theater::simple::types::Chain;
             #[allow(unused_unsafe, clippy::all)]
             /// Logs a message to the actor's log stream.
             ///
@@ -285,7 +285,7 @@ pub mod ntwk {
                     let ptr0 = vec0.as_ptr().cast::<u8>();
                     let len0 = vec0.len();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/runtime")]
+                    #[link(wasm_import_module = "theater:simple/runtime")]
                     unsafe extern "C" {
                         #[link_name = "log"]
                         fn wit_import1(_: *mut u8, _: usize);
@@ -319,7 +319,7 @@ pub mod ntwk {
             /// // Count events by type
             /// let mut event_counts = std::collections::HashMap::new();
             /// for event in chain.events {
-            ///     *event_counts.entry(event.event_type.clone()).or_insert(0) += 1;
+            /// *event_counts.entry(event.event_type.clone()).or_insert(0) += 1;
             /// }
             /// ```
             ///
@@ -343,7 +343,7 @@ pub mod ntwk {
                     );
                     let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/runtime")]
+                    #[link(wasm_import_module = "theater:simple/runtime")]
                     unsafe extern "C" {
                         #[link_name = "get-chain"]
                         fn wit_import1(_: *mut u8);
@@ -383,9 +383,9 @@ pub mod ntwk {
                                 .add(24 + 3 * ::core::mem::size_of::<*const u8>())
                                 .cast::<usize>();
                             let len12 = l11;
-                            super::super::super::ntwk::theater::types::MetaEvent {
+                            super::super::super::theater::simple::types::MetaEvent {
                                 hash: l4 as u64,
-                                event: super::super::super::ntwk::theater::types::Event {
+                                event: super::super::super::theater::simple::types::Event {
                                     event_type: _rt::string_lift(bytes7),
                                     parent: match l8 {
                                         0 => None,
@@ -411,7 +411,7 @@ pub mod ntwk {
                         len13 * (24 + 4 * ::core::mem::size_of::<*const u8>()),
                         8,
                     );
-                    let result14 = super::super::super::ntwk::theater::types::Chain {
+                    let result14 = super::super::super::theater::simple::types::Chain {
                         events: result13,
                     };
                     result14
@@ -442,7 +442,7 @@ pub mod ntwk {
                     };
                     let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/runtime")]
+                    #[link(wasm_import_module = "theater:simple/runtime")]
                     unsafe extern "C" {
                         #[link_name = "shutdown"]
                         fn wit_import3(_: i32, _: *mut u8, _: usize, _: *mut u8);
@@ -706,7 +706,7 @@ pub mod ntwk {
                     };
                     let ptr13 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/process")]
+                    #[link(wasm_import_module = "theater:simple/process")]
                     unsafe extern "C" {
                         #[link_name = "os-spawn"]
                         fn wit_import14(
@@ -822,7 +822,7 @@ pub mod ntwk {
                     let len0 = vec0.len();
                     let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/process")]
+                    #[link(wasm_import_module = "theater:simple/process")]
                     unsafe extern "C" {
                         #[link_name = "os-write-stdin"]
                         fn wit_import2(_: i64, _: *mut u8, _: usize, _: *mut u8);
@@ -882,7 +882,7 @@ pub mod ntwk {
                     let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 40]);
                     let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/process")]
+                    #[link(wasm_import_module = "theater:simple/process")]
                     unsafe extern "C" {
                         #[link_name = "os-status"]
                         fn wit_import1(_: i64, _: *mut u8);
@@ -957,7 +957,7 @@ pub mod ntwk {
                     );
                     let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/process")]
+                    #[link(wasm_import_module = "theater:simple/process")]
                     unsafe extern "C" {
                         #[link_name = "os-signal"]
                         fn wit_import1(_: i64, _: i32, _: *mut u8);
@@ -1015,7 +1015,7 @@ pub mod ntwk {
                     );
                     let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/process")]
+                    #[link(wasm_import_module = "theater:simple/process")]
                     unsafe extern "C" {
                         #[link_name = "os-kill"]
                         fn wit_import1(_: i64, _: *mut u8);
@@ -1072,35 +1072,35 @@ pub mod ntwk {
         /// ## Example
         ///
         /// ```rust
-        /// use ntwk::theater::message_server_host;
-        /// use ntwk::theater::types::actor_id;
+        /// use theater::simple::message_server_host;
+        /// use theater::simple::types::actor_id;
         /// use serde_json::json;
         ///
         /// async fn example() -> Result<(), String> {
-        ///     // Get the target actor ID (in a real scenario)
-        ///     let target_actor = actor_id { id: "actor-123".to_string() };
+        /// // Get the target actor ID (in a real scenario)
+        /// let target_actor = actor_id { id: "actor-123".to_string() };
         ///
-        ///     // Send a one-way message
-        ///     let message = json!({"action": "update", "value": 42});
-        ///     message_server_host::send(target_actor.clone(), message)?;
+        /// // Send a one-way message
+        /// let message = json!({"action": "update", "value": 42});
+        /// message_server_host::send(target_actor.clone(), message)?;
         ///
-        ///     // Make a request and get a response
-        ///     let request = json!({"action": "query", "key": "user-profile"});
-        ///     let response = message_server_host::request(target_actor.clone(), request)?;
-        ///     println!("Received response: {}", response);
+        /// // Make a request and get a response
+        /// let request = json!({"action": "query", "key": "user-profile"});
+        /// let response = message_server_host::request(target_actor.clone(), request)?;
+        /// println!("Received response: {}", response);
         ///
-        ///     // Open a channel for ongoing communication
-        ///     let initial_msg = json!({"action": "subscribe", "topic": "updates"});
-        ///     let channel_id = message_server_host::open_channel(target_actor, initial_msg)?;
+        /// // Open a channel for ongoing communication
+        /// let initial_msg = json!({"action": "subscribe", "topic": "updates"});
+        /// let channel_id = message_server_host::open_channel(target_actor, initial_msg)?;
         ///
-        ///     // Send messages on the channel
-        ///     message_server_host::send_on_channel(channel_id.clone(), json!({"update": 1}))?;
-        ///     message_server_host::send_on_channel(channel_id.clone(), json!({"update": 2}))?;
+        /// // Send messages on the channel
+        /// message_server_host::send_on_channel(channel_id.clone(), json!({"update": 1}))?;
+        /// message_server_host::send_on_channel(channel_id.clone(), json!({"update": 2}))?;
         ///
-        ///     // Close the channel when done
-        ///     message_server_host::close_channel(channel_id)?;
+        /// // Close the channel when done
+        /// message_server_host::close_channel(channel_id)?;
         ///
-        ///     Ok(())
+        /// Ok(())
         /// }
         /// ```
         ///
@@ -1124,8 +1124,8 @@ pub mod ntwk {
             #[doc(hidden)]
             static __FORCE_SECTION_REF: fn() = super::super::super::__link_custom_section_describing_imports;
             use super::super::super::_rt;
-            pub type ActorId = super::super::super::ntwk::theater::types::ActorId;
-            pub type ChannelId = super::super::super::ntwk::theater::types::ChannelId;
+            pub type ActorId = super::super::super::theater::simple::types::ActorId;
+            pub type ChannelId = super::super::super::theater::simple::types::ChannelId;
             #[allow(unused_unsafe, clippy::all)]
             /// # Send one-way message
             ///
@@ -1144,16 +1144,16 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::message_server_host;
-            /// use ntwk::theater::types::actor_id;
+            /// use theater::simple::message_server_host;
+            /// use theater::simple::types::actor_id;
             /// use serde_json::json;
             ///
             /// // Send a notification
             /// let target = actor_id { id: "logging-service".to_string() };
             /// let log_msg = json!({
-            ///     "level": "info",
-            ///     "message": "User logged in",
-            ///     "timestamp": 1625097600000
+            /// "level": "info",
+            /// "message": "User logged in",
+            /// "timestamp": 1625097600000
             /// });
             /// message_server_host::send(target, log_msg)?;
             /// ```
@@ -1183,7 +1183,7 @@ pub mod ntwk {
                     let len1 = vec1.len();
                     let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    #[link(wasm_import_module = "theater:simple/message-server-host")]
                     unsafe extern "C" {
                         #[link_name = "send"]
                         fn wit_import3(
@@ -1254,15 +1254,15 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::message_server_host;
-            /// use ntwk::theater::types::actor_id;
+            /// use theater::simple::message_server_host;
+            /// use theater::simple::types::actor_id;
             /// use serde_json::json;
             ///
             /// // Query a data service
             /// let data_service = actor_id { id: "data-service".to_string() };
             /// let query = json!({
-            ///     "query": "SELECT * FROM users WHERE id = ?",
-            ///     "parameters": [42]
+            /// "query": "SELECT * FROM users WHERE id = ?",
+            /// "parameters": [42]
             /// });
             /// let result = message_server_host::request(data_service, query)?;
             /// ```
@@ -1296,7 +1296,7 @@ pub mod ntwk {
                     let len1 = vec1.len();
                     let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    #[link(wasm_import_module = "theater:simple/message-server-host")]
                     unsafe extern "C" {
                         #[link_name = "request"]
                         fn wit_import3(
@@ -1376,16 +1376,16 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::message_server_host;
-            /// use ntwk::theater::types::actor_id;
+            /// use theater::simple::message_server_host;
+            /// use theater::simple::types::actor_id;
             /// use serde_json::json;
             ///
             /// // Open a channel to a streaming service
             /// let streaming_service = actor_id { id: "data-stream".to_string() };
             /// let subscription = json!({
-            ///     "action": "subscribe",
-            ///     "topics": ["market-data", "news-feed"],
-            ///     "options": {"buffer_size": 100}
+            /// "action": "subscribe",
+            /// "topics": ["market-data", "news-feed"],
+            /// "options": {"buffer_size": 100}
             /// });
             /// let channel = message_server_host::open_channel(streaming_service, subscription)?;
             /// ```
@@ -1421,7 +1421,7 @@ pub mod ntwk {
                     let len1 = vec1.len();
                     let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    #[link(wasm_import_module = "theater:simple/message-server-host")]
                     unsafe extern "C" {
                         #[link_name = "open-channel"]
                         fn wit_import3(
@@ -1506,15 +1506,15 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::message_server_host;
+            /// use theater::simple::message_server_host;
             /// use serde_json::json;
             ///
             /// // Send a message on an established channel
             /// let update = json!({
-            ///     "type": "position-update",
-            ///     "x": 10.5,
-            ///     "y": 20.3,
-            ///     "timestamp": 1625097600000
+            /// "type": "position-update",
+            /// "x": 10.5,
+            /// "y": 20.3,
+            /// "timestamp": 1625097600000
             /// });
             /// message_server_host::send_on_channel(channel_id, update)?;
             /// ```
@@ -1547,7 +1547,7 @@ pub mod ntwk {
                     let len1 = vec1.len();
                     let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    #[link(wasm_import_module = "theater:simple/message-server-host")]
                     unsafe extern "C" {
                         #[link_name = "send-on-channel"]
                         fn wit_import3(
@@ -1617,7 +1617,7 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::message_server_host;
+            /// use theater::simple::message_server_host;
             ///
             /// // Close a channel when done with it
             /// message_server_host::close_channel(channel_id)?;
@@ -1645,7 +1645,7 @@ pub mod ntwk {
                     let len0 = vec0.len();
                     let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    #[link(wasm_import_module = "theater:simple/message-server-host")]
                     unsafe extern "C" {
                         #[link_name = "close-channel"]
                         fn wit_import2(_: *mut u8, _: usize, _: *mut u8);
@@ -1696,12 +1696,12 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::message_server_host;
+            /// use theater::simple::message_server_host;
             ///
             /// // Get all pending requests
             /// let pending_requests = message_server_host::list_outstanding_requests();
             /// for request_id in pending_requests {
-            ///     println!("Pending request: {}", request_id);
+            /// println!("Pending request: {}", request_id);
             /// }
             /// ```
             ///
@@ -1725,7 +1725,7 @@ pub mod ntwk {
                     );
                     let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    #[link(wasm_import_module = "theater:simple/message-server-host")]
                     unsafe extern "C" {
                         #[link_name = "list-outstanding-requests"]
                         fn wit_import1(_: *mut u8);
@@ -1783,15 +1783,15 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::message_server_host;
+            /// use theater::simple::message_server_host;
             /// use serde_json::json;
             ///
             /// // Respond to a specific request
             /// let response = json!({
-            ///     "status": "success",
-            ///     "data": {
-            ///         "result": 42
-            ///     }
+            /// "status": "success",
+            /// "data": {
+            /// "result": 42
+            /// }
             /// });
             /// message_server_host::respond_to_request("req-123", response)?;
             /// ```
@@ -1825,7 +1825,7 @@ pub mod ntwk {
                     let len1 = vec1.len();
                     let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    #[link(wasm_import_module = "theater:simple/message-server-host")]
                     unsafe extern "C" {
                         #[link_name = "respond-to-request"]
                         fn wit_import3(
@@ -1895,7 +1895,7 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::message_server_host;
+            /// use theater::simple::message_server_host;
             ///
             /// // Cancel a request that can't be fulfilled
             /// message_server_host::cancel_request("req-123")?;
@@ -1924,7 +1924,7 @@ pub mod ntwk {
                     let len0 = vec0.len();
                     let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/message-server-host")]
+                    #[link(wasm_import_module = "theater:simple/message-server-host")]
                     unsafe extern "C" {
                         #[link_name = "cancel-request"]
                         fn wit_import2(_: *mut u8, _: usize, _: *mut u8);
@@ -1979,21 +1979,21 @@ pub mod ntwk {
         /// ## Example
         ///
         /// ```rust
-        /// use ntwk::theater::timing;
+        /// use theater::simple::timing;
         ///
         /// async fn example() -> Result<(), String> {
-        ///     // Get the current time
-        ///     let now = timing::now();
-        ///     println!("Current time: {}", now);
+        /// // Get the current time
+        /// let now = timing::now();
+        /// println!("Current time: {}", now);
         ///
-        ///     // Sleep for 500 milliseconds
-        ///     timing::sleep(500)?;
+        /// // Sleep for 500 milliseconds
+        /// timing::sleep(500)?;
         ///
-        ///     // Wait until a specific future time
-        ///     let five_seconds_later = now + 5000;
-        ///     timing::deadline(five_seconds_later)?;
+        /// // Wait until a specific future time
+        /// let five_seconds_later = now + 5000;
+        /// timing::deadline(five_seconds_later)?;
         ///
-        ///     Ok(())
+        /// Ok(())
         /// }
         /// ```
         ///
@@ -2027,7 +2027,7 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::timing;
+            /// use theater::simple::timing;
             ///
             /// // Get current timestamp
             /// let now = timing::now();
@@ -2043,7 +2043,7 @@ pub mod ntwk {
             pub fn now() -> u64 {
                 unsafe {
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/timing")]
+                    #[link(wasm_import_module = "theater:simple/timing")]
                     unsafe extern "C" {
                         #[link_name = "now"]
                         fn wit_import0() -> i64;
@@ -2073,7 +2073,7 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::timing;
+            /// use theater::simple::timing;
             ///
             /// // Sleep for 1 second
             /// timing::sleep(1000)?;
@@ -2102,7 +2102,7 @@ pub mod ntwk {
                     );
                     let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/timing")]
+                    #[link(wasm_import_module = "theater:simple/timing")]
                     unsafe extern "C" {
                         #[link_name = "sleep"]
                         fn wit_import1(_: i64, _: *mut u8);
@@ -2158,7 +2158,7 @@ pub mod ntwk {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::timing;
+            /// use theater::simple::timing;
             ///
             /// // Wait until a specific time
             /// let target_time = 1672531200000; // Jan 1, 2023 00:00:00 UTC
@@ -2190,7 +2190,7 @@ pub mod ntwk {
                     );
                     let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
                     #[cfg(target_arch = "wasm32")]
-                    #[link(wasm_import_module = "ntwk:theater/timing")]
+                    #[link(wasm_import_module = "theater:simple/timing")]
                     unsafe extern "C" {
                         #[link_name = "deadline"]
                         fn wit_import1(_: i64, _: *mut u8);
@@ -2235,244 +2235,8 @@ pub mod ntwk {
 #[rustfmt::skip]
 #[allow(dead_code, clippy::all)]
 pub mod exports {
-    pub mod ntwk {
-        pub mod theater {
-            /// # Actor Interface
-            ///
-            /// Defines the core interface that all Theater actors must implement. This is the
-            /// fundamental contract between the Theater runtime and WebAssembly actor components.
-            ///
-            /// ## Purpose
-            ///
-            /// The actor interface establishes the minimal required functionality for a component
-            /// to be recognized and managed as a Theater actor. By implementing this interface,
-            /// a WebAssembly component can be:
-            ///
-            /// - Loaded by the Theater runtime
-            /// - Initialized with state and parameters
-            /// - Managed within the supervision hierarchy
-            /// - Integrated with the event chain system
-            ///
-            /// This interface is deliberately minimal to make it as easy as possible to create
-            /// compatible actors, while still providing the core functionality needed for the
-            /// Theater system to manage them.
-            ///
-            /// ## Example
-            ///
-            /// Here's how a typical actor would implement this interface in Rust:
-            ///
-            /// ```rust
-            /// use ntwk::theater::actor::Guest;
-            /// use ntwk::theater::types::State;
-            ///
-            /// struct MyActor;
-            ///
-            /// impl Guest for MyActor {
-            ///     fn init(state: State, params: (String,)) -> Result<(State,), String> {
-            ///         // Parse the initial parameters
-            ///         let (actor_id,) = params;
-            ///         println!("Initializing actor with ID: {}", actor_id);
-            ///
-            ///         // Create initial state if none exists
-            ///         let new_state = match state {
-            ///             Some(existing) => {
-            ///                 // Use existing state
-            ///                 existing
-            ///             }
-            ///             None => {
-            ///                 // Create new initial state
-            ///                 let initial_data = MyActorState {
-            ///                     counter: 0,
-            ///                     last_updated: chrono::Utc::now(),
-            ///                 };
-            ///                 serde_json::to_vec(&initial_data).map_err(|e| e.to_string())?
-            ///             }
-            ///         };
-            ///
-            ///         // Return the new state
-            ///         Ok((new_state,))
-            ///     }
-            /// }
-            /// ```
-            ///
-            /// ## Security
-            ///
-            /// This interface is the primary entry point for actor execution. The Theater runtime
-            /// ensures that actors can only access resources they have been explicitly granted
-            /// through handler configurations.
-            ///
-            /// ## Implementation Notes
-            ///
-            /// - The state parameter is passed as a blob of bytes, typically serialized/deserialized
-            ///   using formats like JSON, MessagePack, or bincode.
-            /// - Actors are responsible for managing their own state format and serialization.
-            /// - The parameters tuple allows for flexible initialization with a variety of data types.
-            /// - Returning an error string from the init function will cause the actor to fail to start.
-            #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
-            pub mod actor {
-                #[used]
-                #[doc(hidden)]
-                static __FORCE_SECTION_REF: fn() = super::super::super::super::__link_custom_section_describing_imports;
-                use super::super::super::super::_rt;
-                #[doc(hidden)]
-                #[allow(non_snake_case)]
-                pub unsafe fn _export_init_cabi<T: Guest>(
-                    arg0: i32,
-                    arg1: *mut u8,
-                    arg2: usize,
-                    arg3: *mut u8,
-                    arg4: usize,
-                ) -> *mut u8 {
-                    #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
-                    let len1 = arg4;
-                    let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-                    let result2 = T::init(
-                        match arg0 {
-                            0 => None,
-                            1 => {
-                                let e = {
-                                    let len0 = arg2;
-                                    _rt::Vec::from_raw_parts(arg1.cast(), len0, len0)
-                                };
-                                Some(e)
-                            }
-                            _ => _rt::invalid_enum_discriminant(),
-                        },
-                        (_rt::string_lift(bytes1),),
-                    );
-                    let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
-                    match result2 {
-                        Ok(e) => {
-                            *ptr3.add(0).cast::<u8>() = (0i32) as u8;
-                            let (t4_0,) = e;
-                            match t4_0 {
-                                Some(e) => {
-                                    *ptr3
-                                        .add(::core::mem::size_of::<*const u8>())
-                                        .cast::<u8>() = (1i32) as u8;
-                                    let vec5 = (e).into_boxed_slice();
-                                    let ptr5 = vec5.as_ptr().cast::<u8>();
-                                    let len5 = vec5.len();
-                                    ::core::mem::forget(vec5);
-                                    *ptr3
-                                        .add(3 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<usize>() = len5;
-                                    *ptr3
-                                        .add(2 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<*mut u8>() = ptr5.cast_mut();
-                                }
-                                None => {
-                                    *ptr3
-                                        .add(::core::mem::size_of::<*const u8>())
-                                        .cast::<u8>() = (0i32) as u8;
-                                }
-                            };
-                        }
-                        Err(e) => {
-                            *ptr3.add(0).cast::<u8>() = (1i32) as u8;
-                            let vec6 = (e.into_bytes()).into_boxed_slice();
-                            let ptr6 = vec6.as_ptr().cast::<u8>();
-                            let len6 = vec6.len();
-                            ::core::mem::forget(vec6);
-                            *ptr3
-                                .add(2 * ::core::mem::size_of::<*const u8>())
-                                .cast::<usize>() = len6;
-                            *ptr3
-                                .add(::core::mem::size_of::<*const u8>())
-                                .cast::<*mut u8>() = ptr6.cast_mut();
-                        }
-                    };
-                    ptr3
-                }
-                #[doc(hidden)]
-                #[allow(non_snake_case)]
-                pub unsafe fn __post_return_init<T: Guest>(arg0: *mut u8) {
-                    let l0 = i32::from(*arg0.add(0).cast::<u8>());
-                    match l0 {
-                        0 => {
-                            let l1 = i32::from(
-                                *arg0.add(::core::mem::size_of::<*const u8>()).cast::<u8>(),
-                            );
-                            match l1 {
-                                0 => {}
-                                _ => {
-                                    let l2 = *arg0
-                                        .add(2 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<*mut u8>();
-                                    let l3 = *arg0
-                                        .add(3 * ::core::mem::size_of::<*const u8>())
-                                        .cast::<usize>();
-                                    let base4 = l2;
-                                    let len4 = l3;
-                                    _rt::cabi_dealloc(base4, len4 * 1, 1);
-                                }
-                            }
-                        }
-                        _ => {
-                            let l5 = *arg0
-                                .add(::core::mem::size_of::<*const u8>())
-                                .cast::<*mut u8>();
-                            let l6 = *arg0
-                                .add(2 * ::core::mem::size_of::<*const u8>())
-                                .cast::<usize>();
-                            _rt::cabi_dealloc(l5, l6, 1);
-                        }
-                    }
-                }
-                pub trait Guest {
-                    /// # Initialize the actor
-                    ///
-                    /// Called when the actor is first started or restarted. This function is responsible
-                    /// for setting up the actor's initial state and responding to initialization parameters.
-                    ///
-                    /// ## Parameters
-                    ///
-                    /// * `state` - Current state of the actor, or None if first initialization
-                    /// * `params` - Tuple of initialization parameters, typically including actor ID
-                    ///
-                    /// ## Returns
-                    ///
-                    /// * `Ok((state,))` - The updated state to store
-                    /// * `Err(string)` - An error message if initialization fails
-                    ///
-                    /// ## Implementation Notes
-                    ///
-                    /// - If state is None, the actor should create a new initial state
-                    /// - If state contains data, the actor should validate and use that state
-                    /// - The first parameter in the tuple is typically the actor's ID
-                    /// - Any error returned will cause the actor to fail to start
-                    fn init(
-                        state: Option<_rt::Vec<u8>>,
-                        params: (_rt::String,),
-                    ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
-                }
-                #[doc(hidden)]
-                macro_rules! __export_ntwk_theater_actor_cabi {
-                    ($ty:ident with_types_in $($path_to_types:tt)*) => {
-                        const _ : () = { #[unsafe (export_name =
-                        "ntwk:theater/actor#init")] unsafe extern "C" fn export_init(arg0
-                        : i32, arg1 : * mut u8, arg2 : usize, arg3 : * mut u8, arg4 :
-                        usize,) -> * mut u8 { unsafe { $($path_to_types)*::
-                        _export_init_cabi::<$ty > (arg0, arg1, arg2, arg3, arg4) } }
-                        #[unsafe (export_name = "cabi_post_ntwk:theater/actor#init")]
-                        unsafe extern "C" fn _post_return_init(arg0 : * mut u8,) { unsafe
-                        { $($path_to_types)*:: __post_return_init::<$ty > (arg0) } } };
-                    };
-                }
-                #[doc(hidden)]
-                pub(crate) use __export_ntwk_theater_actor_cabi;
-                #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
-                #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
-                struct _RetArea(
-                    [::core::mem::MaybeUninit<
-                        u8,
-                    >; 4 * ::core::mem::size_of::<*const u8>()],
-                );
-                static mut _RET_AREA: _RetArea = _RetArea(
-                    [::core::mem::MaybeUninit::uninit(); 4
-                        * ::core::mem::size_of::<*const u8>()],
-                );
-            }
+    pub mod theater {
+        pub mod simple {
             /// # Message Server Client Interface
             ///
             /// Defines the callback handlers that actors must implement to receive messages through
@@ -2491,30 +2255,30 @@ pub mod exports {
             /// ## Example
             ///
             /// ```rust
-            /// use ntwk::theater::message_server_client::Guest;
-            /// use ntwk::theater::types::{channel_accept, channel_id};
+            /// use theater::simple::message_server_client::Guest;
+            /// use theater::simple::types::{channel_accept, channel_id};
             /// use serde_json::{json, Value};
             ///
             /// struct MyMessageHandler;
             ///
             /// impl Guest for MyMessageHandler {
-            ///     fn handle_send(state: Option<Value>, params: (Value,))
-            ///             -> Result<(Option<Value>,), String> {
-            ///         let (message,) = params;
-            ///         println!("Received message: {}", message);
+            /// fn handle_send(state: Option<Value>, params: (Value,))
+            /// -> Result<(Option<Value>,), String> {
+            /// let (message,) = params;
+            /// println!("Received message: {}", message);
             ///
-            ///         // Update state if needed
-            ///         let new_state = if let Some(mut state) = state {
-            ///             state["message_count"] = json!(state["message_count"].as_u64().unwrap_or(0) + 1);
-            ///             Some(state)
-            ///         } else {
-            ///             Some(json!({"message_count": 1}))
-            ///         };
+            /// // Update state if needed
+            /// let new_state = if let Some(mut state) = state {
+            /// state["message_count"] = json!(state["message_count"].as_u64().unwrap_or(0) + 1);
+            /// Some(state)
+            /// } else {
+            /// Some(json!({"message_count": 1}))
+            /// };
             ///
-            ///         Ok((new_state,))
-            ///     }
+            /// Ok((new_state,))
+            /// }
             ///
-            ///     // Implement other handlers...
+            /// // Implement other handlers...
             /// }
             /// ```
             ///
@@ -2536,8 +2300,8 @@ pub mod exports {
                 #[doc(hidden)]
                 static __FORCE_SECTION_REF: fn() = super::super::super::super::__link_custom_section_describing_imports;
                 use super::super::super::super::_rt;
-                pub type ChannelId = super::super::super::super::ntwk::theater::types::ChannelId;
-                pub type ChannelAccept = super::super::super::super::ntwk::theater::types::ChannelAccept;
+                pub type ChannelId = super::super::super::super::theater::simple::types::ChannelId;
+                pub type ChannelAccept = super::super::super::super::theater::simple::types::ChannelAccept;
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
                 pub unsafe fn _export_handle_send_cabi<T: Guest>(
@@ -2855,7 +2619,7 @@ pub mod exports {
                                 }
                             };
                             let (t7_0,) = t5_1;
-                            let super::super::super::super::ntwk::theater::types::ChannelAccept {
+                            let super::super::super::super::theater::simple::types::ChannelAccept {
                                 accepted: accepted8,
                                 message: message8,
                             } = t7_0;
@@ -3189,7 +2953,7 @@ pub mod exports {
                     ///
                     /// * `state` - The current actor state or None if not initialized
                     /// * `params` - Tuple containing:
-                    ///   * `json` - The message payload
+                    /// * `json` - The message payload
                     ///
                     /// ## Returns
                     ///
@@ -3200,12 +2964,12 @@ pub mod exports {
                     ///
                     /// ```rust
                     /// fn handle_send(state: Option<Value>, params: (Value,)) -> Result<(Option<Value>,), String> {
-                    ///     let (message,) = params;
+                    /// let (message,) = params;
                     ///
-                    ///     // Process the message...
+                    /// // Process the message...
                     ///
-                    ///     // Return updated state (or None to keep current state)
-                    ///     Ok((Some(updated_state),))
+                    /// // Return updated state (or None to keep current state)
+                    /// Ok((Some(updated_state),))
                     /// }
                     /// ```
                     fn handle_send(
@@ -3220,28 +2984,28 @@ pub mod exports {
                     ///
                     /// * `state` - The current actor state or None if not initialized
                     /// * `params` - Tuple containing:
-                    ///   * `string` - The request ID
-                    ///   * `json` - The request payload
+                    /// * `string` - The request ID
+                    /// * `json` - The request payload
                     ///
                     /// ## Returns
                     ///
                     /// * `Ok((option<list<u8>>, (option<list<u8>>,)))` - Tuple containing:
-                    ///   * Updated actor state (or None)
-                    ///   * Response message to send back (or None to send a response yet)
+                    /// * Updated actor state (or None)
+                    /// * Response message to send back (or None to send a response yet)
                     /// * `Err(string)` - Error message if request handling fails
                     ///
                     /// ## Example
                     ///
                     /// ```rust
                     /// fn handle_request(state: Option<Vec<u8>>, params: (String, Vec<u8>))
-                    ///         -> Result<(Option<Vec<u8>>, (Option<Vec<u8>>,)), String> {
-                    ///     let (request_id, request) = params;
+                    /// -> Result<(Option<Vec<u8>>, (Option<Vec<u8>>,)), String> {
+                    /// let (request_id, request) = params;
                     ///
-                    ///     // Process the request...
-                    ///     let response = json!({"status": "success", "data": "result"});
+                    /// // Process the request...
+                    /// let response = json!({"status": "success", "data": "result"});
                     ///
-                    ///     // Return updated state and response
-                    ///     Ok((Some(updated_state), (Some(response),)))
+                    /// // Return updated state and response
+                    /// Ok((Some(updated_state), (Some(response),)))
                     /// }
                     /// ```
                     fn handle_request(
@@ -3259,30 +3023,30 @@ pub mod exports {
                     ///
                     /// * `state` - The current actor state or None if not initialized
                     /// * `params` - Tuple containing:
-                    ///   * `json` - The initial message payload
+                    /// * `json` - The initial message payload
                     ///
                     /// ## Returns
                     ///
                     /// * `Ok((option<list<u8>>, (channel-accept,)))` - Tuple containing:
-                    ///   * Updated actor state (or None to retain current state)
-                    ///   * Channel acceptance decision
+                    /// * Updated actor state (or None to retain current state)
+                    /// * Channel acceptance decision
                     /// * `Err(string)` - Error message if open handling fails
                     ///
                     /// ## Example
                     ///
                     /// ```rust
                     /// fn handle_channel_open(state: Option<Value>, params: (Value,))
-                    ///         -> Result<(Option<Value>, (channel_accept,)), String> {
-                    ///     let (initial_message,) = params;
+                    /// -> Result<(Option<Value>, (channel_accept,)), String> {
+                    /// let (initial_message,) = params;
                     ///
-                    ///     // Decide whether to accept the channel
-                    ///     let accept = channel_accept {
-                    ///         accept: true,
-                    ///         error_message: None,
-                    ///     };
+                    /// // Decide whether to accept the channel
+                    /// let accept = channel_accept {
+                    /// accept: true,
+                    /// error_message: None,
+                    /// };
                     ///
-                    ///     // Return updated state and acceptance decision
-                    ///     Ok((Some(updated_state), (accept,)))
+                    /// // Return updated state and acceptance decision
+                    /// Ok((Some(updated_state), (accept,)))
                     /// }
                     /// ```
                     ///
@@ -3302,8 +3066,8 @@ pub mod exports {
                     ///
                     /// * `state` - The current actor state or None if not initialized
                     /// * `params` - Tuple containing:
-                    ///   * `channel-id` - ID of the channel the message was received on
-                    ///   * `json` - The message payload
+                    /// * `channel-id` - ID of the channel the message was received on
+                    /// * `json` - The message payload
                     ///
                     /// ## Returns
                     ///
@@ -3314,14 +3078,14 @@ pub mod exports {
                     ///
                     /// ```rust
                     /// fn handle_channel_message(state: Option<Value>, params: (channel_id, Value))
-                    ///         -> Result<(Option<Value>,), String> {
-                    ///     let (channel_id, message) = params;
+                    /// -> Result<(Option<Value>,), String> {
+                    /// let (channel_id, message) = params;
                     ///
-                    ///     // Process the channel message...
-                    ///     println!("Received message on channel {}: {}", channel_id, message);
+                    /// // Process the channel message...
+                    /// println!("Received message on channel {}: {}", channel_id, message);
                     ///
-                    ///     // Return updated state (or None to keep current state)
-                    ///     Ok((Some(updated_state),))
+                    /// // Return updated state (or None to keep current state)
+                    /// Ok((Some(updated_state),))
                     /// }
                     /// ```
                     fn handle_channel_message(
@@ -3336,7 +3100,7 @@ pub mod exports {
                     ///
                     /// * `state` - The current actor state or None if not initialized
                     /// * `params` - Tuple containing:
-                    ///   * `channel-id` - ID of the channel that was closed
+                    /// * `channel-id` - ID of the channel that was closed
                     ///
                     /// ## Returns
                     ///
@@ -3347,14 +3111,14 @@ pub mod exports {
                     ///
                     /// ```rust
                     /// fn handle_channel_close(state: Option<Value>, params: (channel_id,))
-                    ///         -> Result<(Option<Value>,), String> {
-                    ///     let (channel_id,) = params;
+                    /// -> Result<(Option<Value>,), String> {
+                    /// let (channel_id,) = params;
                     ///
-                    ///     // Clean up any resources associated with the channel
-                    ///     println!("Channel {} closed", channel_id);
+                    /// // Clean up any resources associated with the channel
+                    /// println!("Channel {} closed", channel_id);
                     ///
-                    ///     // Return updated state (or None to keep current state)
-                    ///     Ok((Some(updated_state),))
+                    /// // Return updated state (or None to keep current state)
+                    /// Ok((Some(updated_state),))
                     /// }
                     /// ```
                     ///
@@ -3368,66 +3132,67 @@ pub mod exports {
                     ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
                 }
                 #[doc(hidden)]
-                macro_rules! __export_ntwk_theater_message_server_client_cabi {
+                macro_rules! __export_theater_simple_message_server_client_cabi {
                     ($ty:ident with_types_in $($path_to_types:tt)*) => {
                         const _ : () = { #[unsafe (export_name =
-                        "ntwk:theater/message-server-client#handle-send")] unsafe extern
-                        "C" fn export_handle_send(arg0 : i32, arg1 : * mut u8, arg2 :
-                        usize, arg3 : * mut u8, arg4 : usize,) -> * mut u8 { unsafe {
-                        $($path_to_types)*:: _export_handle_send_cabi::<$ty > (arg0,
-                        arg1, arg2, arg3, arg4) } } #[unsafe (export_name =
-                        "cabi_post_ntwk:theater/message-server-client#handle-send")]
+                        "theater:simple/message-server-client#handle-send")] unsafe
+                        extern "C" fn export_handle_send(arg0 : i32, arg1 : * mut u8,
+                        arg2 : usize, arg3 : * mut u8, arg4 : usize,) -> * mut u8 {
+                        unsafe { $($path_to_types)*:: _export_handle_send_cabi::<$ty >
+                        (arg0, arg1, arg2, arg3, arg4) } } #[unsafe (export_name =
+                        "cabi_post_theater:simple/message-server-client#handle-send")]
                         unsafe extern "C" fn _post_return_handle_send(arg0 : * mut u8,) {
                         unsafe { $($path_to_types)*:: __post_return_handle_send::<$ty >
                         (arg0) } } #[unsafe (export_name =
-                        "ntwk:theater/message-server-client#handle-request")] unsafe
+                        "theater:simple/message-server-client#handle-request")] unsafe
                         extern "C" fn export_handle_request(arg0 : i32, arg1 : * mut u8,
                         arg2 : usize, arg3 : * mut u8, arg4 : usize, arg5 : * mut u8,
                         arg6 : usize,) -> * mut u8 { unsafe { $($path_to_types)*::
                         _export_handle_request_cabi::<$ty > (arg0, arg1, arg2, arg3,
                         arg4, arg5, arg6) } } #[unsafe (export_name =
-                        "cabi_post_ntwk:theater/message-server-client#handle-request")]
+                        "cabi_post_theater:simple/message-server-client#handle-request")]
                         unsafe extern "C" fn _post_return_handle_request(arg0 : * mut
                         u8,) { unsafe { $($path_to_types)*::
                         __post_return_handle_request::<$ty > (arg0) } } #[unsafe
                         (export_name =
-                        "ntwk:theater/message-server-client#handle-channel-open")] unsafe
-                        extern "C" fn export_handle_channel_open(arg0 : i32, arg1 : * mut
-                        u8, arg2 : usize, arg3 : * mut u8, arg4 : usize, arg5 : * mut u8,
-                        arg6 : usize,) -> * mut u8 { unsafe { $($path_to_types)*::
-                        _export_handle_channel_open_cabi::<$ty > (arg0, arg1, arg2, arg3,
-                        arg4, arg5, arg6) } } #[unsafe (export_name =
-                        "cabi_post_ntwk:theater/message-server-client#handle-channel-open")]
+                        "theater:simple/message-server-client#handle-channel-open")]
+                        unsafe extern "C" fn export_handle_channel_open(arg0 : i32, arg1
+                        : * mut u8, arg2 : usize, arg3 : * mut u8, arg4 : usize, arg5 : *
+                        mut u8, arg6 : usize,) -> * mut u8 { unsafe {
+                        $($path_to_types)*:: _export_handle_channel_open_cabi::<$ty >
+                        (arg0, arg1, arg2, arg3, arg4, arg5, arg6) } } #[unsafe
+                        (export_name =
+                        "cabi_post_theater:simple/message-server-client#handle-channel-open")]
                         unsafe extern "C" fn _post_return_handle_channel_open(arg0 : *
                         mut u8,) { unsafe { $($path_to_types)*::
                         __post_return_handle_channel_open::<$ty > (arg0) } } #[unsafe
                         (export_name =
-                        "ntwk:theater/message-server-client#handle-channel-message")]
+                        "theater:simple/message-server-client#handle-channel-message")]
                         unsafe extern "C" fn export_handle_channel_message(arg0 : i32,
                         arg1 : * mut u8, arg2 : usize, arg3 : * mut u8, arg4 : usize,
                         arg5 : * mut u8, arg6 : usize,) -> * mut u8 { unsafe {
                         $($path_to_types)*:: _export_handle_channel_message_cabi::<$ty >
                         (arg0, arg1, arg2, arg3, arg4, arg5, arg6) } } #[unsafe
                         (export_name =
-                        "cabi_post_ntwk:theater/message-server-client#handle-channel-message")]
+                        "cabi_post_theater:simple/message-server-client#handle-channel-message")]
                         unsafe extern "C" fn _post_return_handle_channel_message(arg0 : *
                         mut u8,) { unsafe { $($path_to_types)*::
                         __post_return_handle_channel_message::<$ty > (arg0) } } #[unsafe
                         (export_name =
-                        "ntwk:theater/message-server-client#handle-channel-close")]
+                        "theater:simple/message-server-client#handle-channel-close")]
                         unsafe extern "C" fn export_handle_channel_close(arg0 : i32, arg1
                         : * mut u8, arg2 : usize, arg3 : * mut u8, arg4 : usize,) -> *
                         mut u8 { unsafe { $($path_to_types)*::
                         _export_handle_channel_close_cabi::<$ty > (arg0, arg1, arg2,
                         arg3, arg4) } } #[unsafe (export_name =
-                        "cabi_post_ntwk:theater/message-server-client#handle-channel-close")]
+                        "cabi_post_theater:simple/message-server-client#handle-channel-close")]
                         unsafe extern "C" fn _post_return_handle_channel_close(arg0 : *
                         mut u8,) { unsafe { $($path_to_types)*::
                         __post_return_handle_channel_close::<$ty > (arg0) } } };
                     };
                 }
                 #[doc(hidden)]
-                pub(crate) use __export_ntwk_theater_message_server_client_cabi;
+                pub(crate) use __export_theater_simple_message_server_client_cabi;
                 #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
                 #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
                 struct _RetArea(
@@ -3437,6 +3202,243 @@ pub mod exports {
                 );
                 static mut _RET_AREA: _RetArea = _RetArea(
                     [::core::mem::MaybeUninit::uninit(); 8
+                        * ::core::mem::size_of::<*const u8>()],
+                );
+            }
+            /// # Actor Interface
+            ///
+            /// Defines the core interface that all Theater actors must implement. This is the
+            /// fundamental contract between the Theater runtime and WebAssembly actor components.
+            ///
+            /// ## Purpose
+            ///
+            /// The actor interface establishes the minimal required functionality for a component
+            /// to be recognized and managed as a Theater actor. By implementing this interface,
+            /// a WebAssembly component can be:
+            ///
+            /// - Loaded by the Theater runtime
+            /// - Initialized with state and parameters
+            /// - Managed within the supervision hierarchy
+            /// - Integrated with the event chain system
+            ///
+            /// This interface is deliberately minimal to make it as easy as possible to create
+            /// compatible actors, while still providing the core functionality needed for the
+            /// Theater system to manage them.
+            ///
+            /// ## Example
+            ///
+            /// Here's how a typical actor would implement this interface in Rust:
+            ///
+            /// ```rust
+            /// use theater::simple::actor::Guest;
+            /// use theater::simple::types::State;
+            ///
+            /// struct MyActor;
+            ///
+            /// impl Guest for MyActor {
+            /// fn init(state: State, params: (String,)) -> Result<(State,), String> {
+            /// // Parse the initial parameters
+            /// let (actor_id,) = params;
+            /// println!("Initializing actor with ID: {}", actor_id);
+            ///
+            /// // Create initial state if none exists
+            /// let new_state = match state {
+            /// Some(existing) => {
+            /// // Use existing state
+            /// existing
+            /// }
+            /// None => {
+            /// // Create new initial state
+            /// let initial_data = MyActorState {
+            /// counter: 0,
+            /// last_updated: chrono::Utc::now(),
+            /// };
+            /// serde_json::to_vec(&initial_data).map_err(|e| e.to_string())?
+            /// }
+            /// };
+            ///
+            /// // Return the new state
+            /// Ok((new_state,))
+            /// }
+            /// }
+            /// ```
+            ///
+            /// ## Security
+            ///
+            /// This interface is the primary entry point for actor execution. The Theater runtime
+            /// ensures that actors can only access resources they have been explicitly granted
+            /// through handler configurations.
+            ///
+            /// ## Implementation Notes
+            ///
+            /// - The state parameter is passed as a blob of bytes, typically serialized/deserialized
+            /// using formats like JSON, MessagePack, or bincode.
+            /// - Actors are responsible for managing their own state format and serialization.
+            /// - The parameters tuple allows for flexible initialization with a variety of data types.
+            /// - Returning an error string from the init function will cause the actor to fail to start.
+            #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
+            pub mod actor {
+                #[used]
+                #[doc(hidden)]
+                static __FORCE_SECTION_REF: fn() = super::super::super::super::__link_custom_section_describing_imports;
+                use super::super::super::super::_rt;
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_init_cabi<T: Guest>(
+                    arg0: i32,
+                    arg1: *mut u8,
+                    arg2: usize,
+                    arg3: *mut u8,
+                    arg4: usize,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
+                    let len1 = arg4;
+                    let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
+                    let result2 = T::init(
+                        match arg0 {
+                            0 => None,
+                            1 => {
+                                let e = {
+                                    let len0 = arg2;
+                                    _rt::Vec::from_raw_parts(arg1.cast(), len0, len0)
+                                };
+                                Some(e)
+                            }
+                            _ => _rt::invalid_enum_discriminant(),
+                        },
+                        (_rt::string_lift(bytes1),),
+                    );
+                    let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
+                    match result2 {
+                        Ok(e) => {
+                            *ptr3.add(0).cast::<u8>() = (0i32) as u8;
+                            let (t4_0,) = e;
+                            match t4_0 {
+                                Some(e) => {
+                                    *ptr3
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (1i32) as u8;
+                                    let vec5 = (e).into_boxed_slice();
+                                    let ptr5 = vec5.as_ptr().cast::<u8>();
+                                    let len5 = vec5.len();
+                                    ::core::mem::forget(vec5);
+                                    *ptr3
+                                        .add(3 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>() = len5;
+                                    *ptr3
+                                        .add(2 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>() = ptr5.cast_mut();
+                                }
+                                None => {
+                                    *ptr3
+                                        .add(::core::mem::size_of::<*const u8>())
+                                        .cast::<u8>() = (0i32) as u8;
+                                }
+                            };
+                        }
+                        Err(e) => {
+                            *ptr3.add(0).cast::<u8>() = (1i32) as u8;
+                            let vec6 = (e.into_bytes()).into_boxed_slice();
+                            let ptr6 = vec6.as_ptr().cast::<u8>();
+                            let len6 = vec6.len();
+                            ::core::mem::forget(vec6);
+                            *ptr3
+                                .add(2 * ::core::mem::size_of::<*const u8>())
+                                .cast::<usize>() = len6;
+                            *ptr3
+                                .add(::core::mem::size_of::<*const u8>())
+                                .cast::<*mut u8>() = ptr6.cast_mut();
+                        }
+                    };
+                    ptr3
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_init<T: Guest>(arg0: *mut u8) {
+                    let l0 = i32::from(*arg0.add(0).cast::<u8>());
+                    match l0 {
+                        0 => {
+                            let l1 = i32::from(
+                                *arg0.add(::core::mem::size_of::<*const u8>()).cast::<u8>(),
+                            );
+                            match l1 {
+                                0 => {}
+                                _ => {
+                                    let l2 = *arg0
+                                        .add(2 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<*mut u8>();
+                                    let l3 = *arg0
+                                        .add(3 * ::core::mem::size_of::<*const u8>())
+                                        .cast::<usize>();
+                                    let base4 = l2;
+                                    let len4 = l3;
+                                    _rt::cabi_dealloc(base4, len4 * 1, 1);
+                                }
+                            }
+                        }
+                        _ => {
+                            let l5 = *arg0
+                                .add(::core::mem::size_of::<*const u8>())
+                                .cast::<*mut u8>();
+                            let l6 = *arg0
+                                .add(2 * ::core::mem::size_of::<*const u8>())
+                                .cast::<usize>();
+                            _rt::cabi_dealloc(l5, l6, 1);
+                        }
+                    }
+                }
+                pub trait Guest {
+                    /// # Initialize the actor
+                    ///
+                    /// Called when the actor is first started or restarted. This function is responsible
+                    /// for setting up the actor's initial state and responding to initialization parameters.
+                    ///
+                    /// ## Parameters
+                    ///
+                    /// * `state` - Current state of the actor, or None if first initialization
+                    /// * `params` - Tuple of initialization parameters, typically including actor ID
+                    ///
+                    /// ## Returns
+                    ///
+                    /// * `Ok((state,))` - The updated state to store
+                    /// * `Err(string)` - An error message if initialization fails
+                    ///
+                    /// ## Implementation Notes
+                    ///
+                    /// - If state is None, the actor should create a new initial state
+                    /// - If state contains data, the actor should validate and use that state
+                    /// - The first parameter in the tuple is typically the actor's ID
+                    /// - Any error returned will cause the actor to fail to start
+                    fn init(
+                        state: Option<_rt::Vec<u8>>,
+                        params: (_rt::String,),
+                    ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
+                }
+                #[doc(hidden)]
+                macro_rules! __export_theater_simple_actor_cabi {
+                    ($ty:ident with_types_in $($path_to_types:tt)*) => {
+                        const _ : () = { #[unsafe (export_name =
+                        "theater:simple/actor#init")] unsafe extern "C" fn
+                        export_init(arg0 : i32, arg1 : * mut u8, arg2 : usize, arg3 : *
+                        mut u8, arg4 : usize,) -> * mut u8 { unsafe {
+                        $($path_to_types)*:: _export_init_cabi::<$ty > (arg0, arg1, arg2,
+                        arg3, arg4) } } #[unsafe (export_name =
+                        "cabi_post_theater:simple/actor#init")] unsafe extern "C" fn
+                        _post_return_init(arg0 : * mut u8,) { unsafe {
+                        $($path_to_types)*:: __post_return_init::<$ty > (arg0) } } };
+                    };
+                }
+                #[doc(hidden)]
+                pub(crate) use __export_theater_simple_actor_cabi;
+                #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                struct _RetArea(
+                    [::core::mem::MaybeUninit<
+                        u8,
+                    >; 4 * ::core::mem::size_of::<*const u8>()],
+                );
+                static mut _RET_AREA: _RetArea = _RetArea(
+                    [::core::mem::MaybeUninit::uninit(); 4
                         * ::core::mem::size_of::<*const u8>()],
                 );
             }
@@ -3778,40 +3780,40 @@ pub mod exports {
                     ) -> Result<(Option<_rt::Vec<u8>>,), _rt::String>;
                 }
                 #[doc(hidden)]
-                macro_rules! __export_ntwk_theater_process_handlers_cabi {
+                macro_rules! __export_theater_simple_process_handlers_cabi {
                     ($ty:ident with_types_in $($path_to_types:tt)*) => {
                         const _ : () = { #[unsafe (export_name =
-                        "ntwk:theater/process-handlers#handle-stdout")] unsafe extern "C"
-                        fn export_handle_stdout(arg0 : i32, arg1 : * mut u8, arg2 :
+                        "theater:simple/process-handlers#handle-stdout")] unsafe extern
+                        "C" fn export_handle_stdout(arg0 : i32, arg1 : * mut u8, arg2 :
                         usize, arg3 : i64, arg4 : * mut u8, arg5 : usize,) -> * mut u8 {
                         unsafe { $($path_to_types)*:: _export_handle_stdout_cabi::<$ty >
                         (arg0, arg1, arg2, arg3, arg4, arg5) } } #[unsafe (export_name =
-                        "cabi_post_ntwk:theater/process-handlers#handle-stdout")] unsafe
-                        extern "C" fn _post_return_handle_stdout(arg0 : * mut u8,) {
-                        unsafe { $($path_to_types)*:: __post_return_handle_stdout::<$ty >
-                        (arg0) } } #[unsafe (export_name =
-                        "ntwk:theater/process-handlers#handle-stderr")] unsafe extern "C"
-                        fn export_handle_stderr(arg0 : i32, arg1 : * mut u8, arg2 :
+                        "cabi_post_theater:simple/process-handlers#handle-stdout")]
+                        unsafe extern "C" fn _post_return_handle_stdout(arg0 : * mut u8,)
+                        { unsafe { $($path_to_types)*:: __post_return_handle_stdout::<$ty
+                        > (arg0) } } #[unsafe (export_name =
+                        "theater:simple/process-handlers#handle-stderr")] unsafe extern
+                        "C" fn export_handle_stderr(arg0 : i32, arg1 : * mut u8, arg2 :
                         usize, arg3 : i64, arg4 : * mut u8, arg5 : usize,) -> * mut u8 {
                         unsafe { $($path_to_types)*:: _export_handle_stderr_cabi::<$ty >
                         (arg0, arg1, arg2, arg3, arg4, arg5) } } #[unsafe (export_name =
-                        "cabi_post_ntwk:theater/process-handlers#handle-stderr")] unsafe
-                        extern "C" fn _post_return_handle_stderr(arg0 : * mut u8,) {
-                        unsafe { $($path_to_types)*:: __post_return_handle_stderr::<$ty >
-                        (arg0) } } #[unsafe (export_name =
-                        "ntwk:theater/process-handlers#handle-exit")] unsafe extern "C"
+                        "cabi_post_theater:simple/process-handlers#handle-stderr")]
+                        unsafe extern "C" fn _post_return_handle_stderr(arg0 : * mut u8,)
+                        { unsafe { $($path_to_types)*:: __post_return_handle_stderr::<$ty
+                        > (arg0) } } #[unsafe (export_name =
+                        "theater:simple/process-handlers#handle-exit")] unsafe extern "C"
                         fn export_handle_exit(arg0 : i32, arg1 : * mut u8, arg2 : usize,
                         arg3 : i64, arg4 : i32,) -> * mut u8 { unsafe {
                         $($path_to_types)*:: _export_handle_exit_cabi::<$ty > (arg0,
                         arg1, arg2, arg3, arg4) } } #[unsafe (export_name =
-                        "cabi_post_ntwk:theater/process-handlers#handle-exit")] unsafe
+                        "cabi_post_theater:simple/process-handlers#handle-exit")] unsafe
                         extern "C" fn _post_return_handle_exit(arg0 : * mut u8,) { unsafe
                         { $($path_to_types)*:: __post_return_handle_exit::<$ty > (arg0) }
                         } };
                     };
                 }
                 #[doc(hidden)]
-                pub(crate) use __export_ntwk_theater_process_handlers_cabi;
+                pub(crate) use __export_theater_simple_process_handlers_cabi;
                 #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
                 #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
                 struct _RetArea(
@@ -3971,33 +3973,33 @@ mod _rt {
 /// ```
 #[allow(unused_macros)]
 #[doc(hidden)]
-macro_rules! __export_hello_world_impl {
+macro_rules! __export_default_impl {
     ($ty:ident) => {
         self::export!($ty with_types_in self);
     };
     ($ty:ident with_types_in $($path_to_types_root:tt)*) => {
         $($path_to_types_root)*::
-        exports::ntwk::theater::actor::__export_ntwk_theater_actor_cabi!($ty
-        with_types_in $($path_to_types_root)*:: exports::ntwk::theater::actor);
+        exports::theater::simple::message_server_client::__export_theater_simple_message_server_client_cabi!($ty
+        with_types_in $($path_to_types_root)*::
+        exports::theater::simple::message_server_client); $($path_to_types_root)*::
+        exports::theater::simple::actor::__export_theater_simple_actor_cabi!($ty
+        with_types_in $($path_to_types_root)*:: exports::theater::simple::actor);
         $($path_to_types_root)*::
-        exports::ntwk::theater::message_server_client::__export_ntwk_theater_message_server_client_cabi!($ty
+        exports::theater::simple::process_handlers::__export_theater_simple_process_handlers_cabi!($ty
         with_types_in $($path_to_types_root)*::
-        exports::ntwk::theater::message_server_client); $($path_to_types_root)*::
-        exports::ntwk::theater::process_handlers::__export_ntwk_theater_process_handlers_cabi!($ty
-        with_types_in $($path_to_types_root)*::
-        exports::ntwk::theater::process_handlers);
+        exports::theater::simple::process_handlers);
     };
 }
 #[doc(inline)]
-pub(crate) use __export_hello_world_impl as export;
+pub(crate) use __export_default_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[unsafe(
-    link_section = "component-type:wit-bindgen:0.41.0:ntwk:theater:hello-world:encoded world"
+    link_section = "component-type:wit-bindgen:0.41.0:colinrozzi:mcp-poc:default:encoded world"
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2388] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xd2\x11\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2402] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xe4\x11\x01A\x02\x01\
 A\x15\x01B\x16\x01s\x04\0\x08actor-id\x03\0\0\x01s\x04\0\x0achannel-id\x03\0\x02\
 \x01p}\x01k\x04\x01r\x02\x08accepted\x7f\x07message\x05\x04\0\x0echannel-accept\x03\
 \0\x06\x01kw\x01r\x03\x0aevent-types\x06parent\x08\x04data\x04\x04\0\x05event\x03\
@@ -4007,13 +4009,13 @@ r\x01\x06events\x0d\x04\0\x05chain\x03\0\x0e\x01r\x05\x04hash\x04\x0bparent-hash
 m\x09\x11operation-timeout\x0echannel-closed\x0dshutting-down\x12function-not-fo\
 und\x0dtype-mismatch\x08internal\x13serialization-error\x16update-component-erro\
 r\x06paused\x04\0\x0ewit-error-type\x03\0\x12\x01r\x02\x0aerror-type\x13\x04data\
-\x05\x04\0\x0fwit-actor-error\x03\0\x14\x03\0\x12ntwk:theater/types\x05\0\x02\x03\
+\x05\x04\0\x0fwit-actor-error\x03\0\x14\x03\0\x14theater:simple/types\x05\0\x02\x03\
 \0\0\x05chain\x02\x03\0\0\x08actor-id\x01B\x0d\x02\x03\x02\x01\x01\x04\0\x05chai\
 n\x03\0\0\x02\x03\x02\x01\x02\x04\0\x08actor-id\x03\0\x02\x01@\x01\x03msgs\x01\0\
 \x04\0\x03log\x01\x04\x01@\0\0\x01\x04\0\x09get-chain\x01\x05\x01p}\x01k\x06\x01\
-j\0\x01s\x01@\x01\x04data\x07\0\x08\x04\0\x08shutdown\x01\x09\x03\0\x14ntwk:thea\
-ter/runtime\x05\x03\x01B\x1b\x01q\x04\x03raw\0\0\x0cline-by-line\0\0\x04json\0\0\
-\x07chunked\0\0\x04\0\x0boutput-mode\x03\0\0\x01ps\x01ks\x01o\x02ss\x01p\x04\x01\
+j\0\x01s\x01@\x01\x04data\x07\0\x08\x04\0\x08shutdown\x01\x09\x03\0\x16theater:s\
+imple/runtime\x05\x03\x01B\x1b\x01q\x04\x03raw\0\0\x0cline-by-line\0\0\x04json\0\
+\0\x07chunked\0\0\x04\0\x0boutput-mode\x03\0\0\x01ps\x01ks\x01o\x02ss\x01p\x04\x01\
 ky\x01r\x08\x07programs\x04args\x02\x03cwd\x03\x03env\x05\x0bbuffer-sizey\x0bstd\
 out-mode\x01\x0bstderr-mode\x01\x0achunk-size\x06\x04\0\x0eprocess-config\x03\0\x07\
 \x01kz\x01r\x04\x03pidw\x07running\x7f\x09exit-code\x09\x0astart-timew\x04\0\x0e\
@@ -4021,38 +4023,38 @@ process-status\x03\0\x0a\x01j\x01w\x01s\x01@\x01\x06config\x08\0\x0c\x04\0\x08os
 -spawn\x01\x0d\x01p}\x01j\x01y\x01s\x01@\x02\x03pidw\x04data\x0e\0\x0f\x04\0\x0e\
 os-write-stdin\x01\x10\x01j\x01\x0b\x01s\x01@\x01\x03pidw\0\x11\x04\0\x09os-stat\
 us\x01\x12\x01j\0\x01s\x01@\x02\x03pidw\x06signaly\0\x13\x04\0\x09os-signal\x01\x14\
-\x01@\x01\x03pidw\0\x13\x04\0\x07os-kill\x01\x15\x03\0\x14ntwk:theater/process\x05\
-\x04\x02\x03\0\0\x0achannel-id\x01B\x19\x02\x03\x02\x01\x02\x04\0\x08actor-id\x03\
-\0\0\x02\x03\x02\x01\x05\x04\0\x0achannel-id\x03\0\x02\x01p}\x01j\0\x01s\x01@\x02\
-\x08actor-id\x01\x03msg\x04\0\x05\x04\0\x04send\x01\x06\x01j\x01\x04\x01s\x01@\x02\
-\x08actor-id\x01\x03msg\x04\0\x07\x04\0\x07request\x01\x08\x01j\x01\x03\x01s\x01\
-@\x02\x08actor-id\x01\x0binitial-msg\x04\0\x09\x04\0\x0copen-channel\x01\x0a\x01\
-@\x02\x0achannel-id\x03\x03msg\x04\0\x05\x04\0\x0fsend-on-channel\x01\x0b\x01@\x01\
-\x0achannel-id\x03\0\x05\x04\0\x0dclose-channel\x01\x0c\x01ps\x01@\0\0\x0d\x04\0\
-\x19list-outstanding-requests\x01\x0e\x01@\x02\x0arequest-ids\x08response\x04\0\x05\
-\x04\0\x12respond-to-request\x01\x0f\x01@\x01\x0arequest-ids\0\x05\x04\0\x0ecanc\
-el-request\x01\x10\x03\0\x20ntwk:theater/message-server-host\x05\x06\x01B\x07\x01\
-@\0\0w\x04\0\x03now\x01\0\x01j\0\x01s\x01@\x01\x08durationw\0\x01\x04\0\x05sleep\
-\x01\x02\x01@\x01\x09timestampw\0\x01\x04\0\x08deadline\x01\x03\x03\0\x13ntwk:th\
-eater/timing\x05\x07\x01B\x07\x01p}\x01k\0\x01o\x01s\x01o\x01\x01\x01j\x01\x03\x01\
-s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\0\x04init\x01\x05\x04\0\x12ntwk:\
-theater/actor\x05\x08\x02\x03\0\0\x05event\x02\x03\0\0\x0echannel-accept\x01B\x1d\
-\x02\x03\x02\x01\x09\x04\0\x05event\x03\0\0\x02\x03\x02\x01\x05\x04\0\x0achannel\
--id\x03\0\x02\x02\x03\x02\x01\x0a\x04\0\x0echannel-accept\x03\0\x04\x01p}\x01k\x06\
-\x01o\x01\x06\x01o\x01\x07\x01j\x01\x09\x01s\x01@\x02\x05state\x07\x06params\x08\
-\0\x0a\x04\0\x0bhandle-send\x01\x0b\x01o\x02s\x06\x01o\x02\x07\x09\x01j\x01\x0d\x01\
-s\x01@\x02\x05state\x07\x06params\x0c\0\x0e\x04\0\x0ehandle-request\x01\x0f\x01o\
-\x01\x05\x01o\x02\x07\x10\x01j\x01\x11\x01s\x01@\x02\x05state\x07\x06params\x0c\0\
-\x12\x04\0\x13handle-channel-open\x01\x13\x01o\x02\x03\x06\x01@\x02\x05state\x07\
-\x06params\x14\0\x0a\x04\0\x16handle-channel-message\x01\x15\x01o\x01\x03\x01@\x02\
-\x05state\x07\x06params\x16\0\x0a\x04\0\x14handle-channel-close\x01\x17\x04\0\"n\
-twk:theater/message-server-client\x05\x0b\x01B\x0b\x01p}\x01k\0\x01o\x02w\0\x01o\
-\x01\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\0\x0dha\
-ndle-stdout\x01\x05\x04\0\x0dhandle-stderr\x01\x05\x01o\x02wz\x01@\x02\x05state\x01\
-\x06params\x06\0\x04\x04\0\x0bhandle-exit\x01\x07\x04\0\x1dntwk:theater/process-\
-handlers\x05\x0c\x04\0\x18ntwk:theater/hello-world\x04\0\x0b\x11\x01\0\x0bhello-\
-world\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.227.\
-1\x10wit-bindgen-rust\x060.41.0";
+\x01@\x01\x03pidw\0\x13\x04\0\x07os-kill\x01\x15\x03\0\x16theater:simple/process\
+\x05\x04\x02\x03\0\0\x0achannel-id\x01B\x19\x02\x03\x02\x01\x02\x04\0\x08actor-i\
+d\x03\0\0\x02\x03\x02\x01\x05\x04\0\x0achannel-id\x03\0\x02\x01p}\x01j\0\x01s\x01\
+@\x02\x08actor-id\x01\x03msg\x04\0\x05\x04\0\x04send\x01\x06\x01j\x01\x04\x01s\x01\
+@\x02\x08actor-id\x01\x03msg\x04\0\x07\x04\0\x07request\x01\x08\x01j\x01\x03\x01\
+s\x01@\x02\x08actor-id\x01\x0binitial-msg\x04\0\x09\x04\0\x0copen-channel\x01\x0a\
+\x01@\x02\x0achannel-id\x03\x03msg\x04\0\x05\x04\0\x0fsend-on-channel\x01\x0b\x01\
+@\x01\x0achannel-id\x03\0\x05\x04\0\x0dclose-channel\x01\x0c\x01ps\x01@\0\0\x0d\x04\
+\0\x19list-outstanding-requests\x01\x0e\x01@\x02\x0arequest-ids\x08response\x04\0\
+\x05\x04\0\x12respond-to-request\x01\x0f\x01@\x01\x0arequest-ids\0\x05\x04\0\x0e\
+cancel-request\x01\x10\x03\0\"theater:simple/message-server-host\x05\x06\x01B\x07\
+\x01@\0\0w\x04\0\x03now\x01\0\x01j\0\x01s\x01@\x01\x08durationw\0\x01\x04\0\x05s\
+leep\x01\x02\x01@\x01\x09timestampw\0\x01\x04\0\x08deadline\x01\x03\x03\0\x15the\
+ater:simple/timing\x05\x07\x02\x03\0\0\x05event\x02\x03\0\0\x0echannel-accept\x01\
+B\x1d\x02\x03\x02\x01\x08\x04\0\x05event\x03\0\0\x02\x03\x02\x01\x05\x04\0\x0ach\
+annel-id\x03\0\x02\x02\x03\x02\x01\x09\x04\0\x0echannel-accept\x03\0\x04\x01p}\x01\
+k\x06\x01o\x01\x06\x01o\x01\x07\x01j\x01\x09\x01s\x01@\x02\x05state\x07\x06param\
+s\x08\0\x0a\x04\0\x0bhandle-send\x01\x0b\x01o\x02s\x06\x01o\x02\x07\x09\x01j\x01\
+\x0d\x01s\x01@\x02\x05state\x07\x06params\x0c\0\x0e\x04\0\x0ehandle-request\x01\x0f\
+\x01o\x01\x05\x01o\x02\x07\x10\x01j\x01\x11\x01s\x01@\x02\x05state\x07\x06params\
+\x0c\0\x12\x04\0\x13handle-channel-open\x01\x13\x01o\x02\x03\x06\x01@\x02\x05sta\
+te\x07\x06params\x14\0\x0a\x04\0\x16handle-channel-message\x01\x15\x01o\x01\x03\x01\
+@\x02\x05state\x07\x06params\x16\0\x0a\x04\0\x14handle-channel-close\x01\x17\x04\
+\0$theater:simple/message-server-client\x05\x0a\x01B\x07\x01p}\x01k\0\x01o\x01s\x01\
+o\x01\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\0\x04i\
+nit\x01\x05\x04\0\x14theater:simple/actor\x05\x0b\x01B\x0b\x01p}\x01k\0\x01o\x02\
+w\0\x01o\x01\x01\x01j\x01\x03\x01s\x01@\x02\x05state\x01\x06params\x02\0\x04\x04\
+\0\x0dhandle-stdout\x01\x05\x04\0\x0dhandle-stderr\x01\x05\x01o\x02wz\x01@\x02\x05\
+state\x01\x06params\x06\0\x04\x04\0\x0bhandle-exit\x01\x07\x04\0\x1ftheater:simp\
+le/process-handlers\x05\x0c\x04\0\x1acolinrozzi:mcp-poc/default\x04\0\x0b\x0d\x01\
+\0\x07default\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x07\
+0.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

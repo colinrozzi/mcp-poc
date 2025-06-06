@@ -1,13 +1,13 @@
 mod bindings;
 
-use crate::bindings::exports::ntwk::theater::actor::Guest;
-use crate::bindings::exports::ntwk::theater::message_server_client::Guest as MessageServerClient;
-use crate::bindings::exports::ntwk::theater::process_handlers::Guest as ProcessHandlers;
-use crate::bindings::ntwk::theater::message_server_host::{respond_to_request, send};
-use crate::bindings::ntwk::theater::process::{os_spawn, os_write_stdin, OutputMode};
-use crate::bindings::ntwk::theater::runtime::log;
+use crate::bindings::exports::theater::simple::actor::Guest;
+use crate::bindings::exports::theater::simple::message_server_client::Guest as MessageServerClient;
+use crate::bindings::exports::theater::simple::process_handlers::Guest as ProcessHandlers;
+use crate::bindings::theater::simple::message_server_host::{respond_to_request, send};
+use crate::bindings::theater::simple::process::{os_spawn, os_write_stdin, OutputMode};
+use crate::bindings::theater::simple::runtime::log;
 
-use bindings::ntwk::theater::types::ChannelAccept;
+use bindings::theater::simple::types::ChannelAccept;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -70,6 +70,8 @@ struct AppState {
 
     // Server capabilities
     server_capabilities: Option<Value>,
+
+    buffer: String,
 }
 
 impl AppState {
@@ -129,7 +131,9 @@ impl AppState {
     fn handle_process_stdout(self: &mut Self, stdout_data: String) -> Result<(), String> {
         log("Handling process stdout data");
 
-        match serde_json::from_str::<McpResponse>(&stdout_data) {
+        self.buffer.push_str(&stdout_data);
+
+        match serde_json::from_str::<McpResponse>(&self.buffer) {
             Ok(response) => {
                 log(&format!("Parsed MCP response: {:?}", response));
 
@@ -156,6 +160,7 @@ impl AppState {
 
                         log("MCP connection established. Ready for commands.");
                         self.server_initialized = true;
+                        self.buffer.clear();
                         if self.unsent_requests.is_empty() {
                             log("No unsent requests to send");
                         } else {
@@ -167,6 +172,7 @@ impl AppState {
                             "Server initialization failed: {} (code: {})",
                             error.message, error.code
                         ));
+                        self.buffer.clear();
                     }
                 } else {
                     respond_to_request(
@@ -176,6 +182,7 @@ impl AppState {
                             .expect("Failed to serialize response"),
                     )
                     .map_err(|e| format!("Failed to respond to request: {}", e))?;
+                    self.buffer.clear();
 
                     log(&format!(
                         "Responded to request {} with result: {:?}",
@@ -212,6 +219,7 @@ impl Guest for Actor {
             unsent_requests: vec![],
             pending_requests: HashMap::new(),
             server_capabilities: None,
+            buffer: String::new(),
         };
 
         log("Created default app state");
@@ -228,7 +236,7 @@ impl Guest for Actor {
         ));
 
         // Start the fs-mcp-server process
-        let config = bindings::ntwk::theater::process::ProcessConfig {
+        let config = bindings::theater::simple::process::ProcessConfig {
             program: init_state.command,
             args: init_state.args,
             env: vec![],

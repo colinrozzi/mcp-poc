@@ -1,12 +1,12 @@
-package ntwk:theater;
+package colinrozzi:mcp-poc;
 
-world hello-world {
-    import runtime;
-    export actor;
-    export message-server-client;
+world default {
+    import theater:simple/runtime;
+    import theater:simple/process;
+    import theater:simple/message-server-host;
+    import theater:simple/timing;
 
-    export process-handlers;
-    import process;
-    import message-server-host;
-    import timing;
+    export theater:simple/message-server-client;
+    export theater:simple/actor;
+    export theater:simple/process-handlers;
 }
